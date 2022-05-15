@@ -1,0 +1,13 @@
+[package]
+name = "poliosis-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winit = "0.26"
+wgpu = "0.12"
+pollster = "0.2"
+bytemuck = { version = "1.4", features = [ "derive" ] }
+regex = "1"
+wgpu_glyph = "0.16"
+chrono = "0.4"

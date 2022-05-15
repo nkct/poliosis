@@ -1,0 +1,146 @@
+[Date: 2022-04-11 23:01:39.45]
+[Version: 0.1.0]
+
+camera_position {
+    x:  0,
+    y:  0,
+}
+
+selected {
+    x: -1,
+    y:  1,
+}
+
+money { 10000 }
+
+settings {
+    tile_ratio: [7, 5],
+}
+
+grid {
+    tile { x:  20, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  20, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  19, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  19, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  18, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  18, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  17, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  17, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  16, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  16, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  15, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  15, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  14, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  14, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  13, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  13, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  12, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  12, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  11, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  11, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  10, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  10, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   9, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   9, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   8, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   8, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   7, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   7, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   6, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   6, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   5, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   5, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   4, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   4, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   3, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   3, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   2, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   2, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   1, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:   1, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:   0, y:   1, filling:      Air, }, [ Repeat (19) times (  up) ]
+    tile { x:   0, y:   0, filling: Building { health: 300, tier: 3, }, },
+    tile { x:   0, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -1, y:   2, filling:      Air, }, [ Repeat (18) times (  up) ]
+    tile { x:  -1, y:   1, filling: Building { health: 100, tier: 1, }, },
+    tile { x:  -1, y:   0, filling: Building { health: 200, tier: 2, }, },
+    tile { x:  -1, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -2, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -2, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -3, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -3, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -4, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -4, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -5, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -5, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -6, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -6, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -7, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -7, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -8, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -8, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x:  -9, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x:  -9, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+    
+    tile { x: -10, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -10, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -11, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -11, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -12, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -12, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -13, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -13, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -14, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -14, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -15, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -15, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -16, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -16, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -17, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -17, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -18, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -18, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -19, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -19, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+
+    tile { x: -20, y:   0, filling:      Air, }, [ Repeat (20) times (  up) ]
+    tile { x: -20, y:  -1, filling:   Ground, }, [ Repeat ( 3) times (down) ]
+}
