@@ -45,11 +45,19 @@ impl Grid {
         return Grid{grid};
     }
 
-    fn get(&self, coord: Coord) -> &Tile {
-        todo!();
+    fn get(&self, coord: Coord) -> Option<&Tile> {
+        if let Some(col) = self.grid.get(&coord.x) {
+            return col.get(&coord.y);
+        } else {
+            return None;
+        }
     }
-    fn get_mut(&self, coord: Coord) -> &mut Tile {
-        todo!();
+    fn get_mut(&mut self, coord: Coord) -> Option<&mut Tile> {
+        if let Some(col) = self.grid.get_mut(&coord.x) {
+            return col.get_mut(&coord.y);
+        } else {
+            return None;
+        }
     }
 
     fn get_matching(&self, pattern: Tile) -> Vec<&Tile> {
@@ -68,7 +76,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_grid_initialization() {
+    fn test_grid_new() {
         let new_grid = Grid::new(Vec::from([
             (Coord{x: 0, y: 0}, Tile::Air),
             (Coord{x: 0, y: 1}, Tile::Air),
@@ -87,5 +95,37 @@ mod tests {
                 (1, Tile::Air),
             ])),
         ]));
+    }
+
+    #[test]
+    fn test_grid_get() {
+        let test_grid = Grid::new(Vec::from([
+            (Coord{x: 0, y: 0}, Tile::Air),
+            (Coord{x: 0, y: 1}, Tile::Air),
+
+            (Coord{x: 1, y: 0}, Tile::Air),
+            (Coord{x: 1, y: 1}, Tile::Air),
+        ]));
+
+        assert_eq!(
+            test_grid.get(Coord { x: 0, y: 0 }),
+            Some(&Tile::Air)
+        )
+    }
+
+    #[test]
+    fn test_grid_get_mut() {
+        let mut test_grid = Grid::new(Vec::from([
+            (Coord{x: 0, y: 0}, Tile::Air),
+            (Coord{x: 0, y: 1}, Tile::Air),
+
+            (Coord{x: 1, y: 0}, Tile::Air),
+            (Coord{x: 1, y: 1}, Tile::Air),
+        ]));
+
+        assert_eq!(
+            test_grid.get_mut(Coord { x: 0, y: 0 }),
+            Some(&mut Tile::Air)
+        )
     }
 }
