@@ -14,6 +14,7 @@ impl fmt::Display for Tile {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Hash)]
 struct Coord {
     x: i32,
     y: i32,
@@ -22,6 +23,14 @@ struct Coord {
 #[derive(Debug, PartialEq)]
 struct Grid {
     grid: HashMap<i32, HashMap<i32, Tile>>,
+}
+impl IntoIterator for Grid {
+    type Item = (Coord, Tile);
+    type IntoIter = std::collections::hash_map::IntoIter<Coord, Tile>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.flatten().into_iter();
+    }
 }
 impl Grid {
     fn new(tiles: Vec<(Coord, Tile)>) -> Grid {
@@ -43,6 +52,18 @@ impl Grid {
         }
         
         return Grid{grid};
+    }
+
+    fn flatten(&self) -> HashMap<Coord, Tile> {
+        let mut flat_grid: HashMap<Coord, Tile> = HashMap::new();
+
+        for (x, col) in &self.grid {
+            for (y, tile) in col {
+                flat_grid.insert(Coord { x: *x, y: *y }, *tile);
+            }
+        }
+
+        return flat_grid;
     }
 
     fn get(&self, coord: Coord) -> Option<&Tile> {
@@ -75,17 +96,43 @@ impl Grid {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_grid_new() {
-        let new_grid = Grid::new(Vec::from([
+    fn create_test_grid() -> Grid {
+        return Grid::new(Vec::from([
             (Coord{x: 0, y: 0}, Tile::Air),
             (Coord{x: 0, y: 1}, Tile::Air),
 
             (Coord{x: 1, y: 0}, Tile::Air),
             (Coord{x: 1, y: 1}, Tile::Air),
-        ]));
+        ]))
+    }
 
-        assert_eq!(new_grid.grid, HashMap::from([
+    #[test]
+    fn test_grid_intoiter() {
+        let test_grid = create_test_grid();
+
+        for (_, _) in test_grid {
+            assert!(true)
+        }
+    }
+
+    #[test]
+    fn test_grid_flatten() {
+        let test_grid = create_test_grid();
+        
+        assert_eq!(test_grid.flatten(), HashMap::from([
+            (Coord{x: 0, y: 0}, Tile::Air),
+            (Coord{x: 0, y: 1}, Tile::Air),
+
+            (Coord{x: 1, y: 0}, Tile::Air),
+            (Coord{x: 1, y: 1}, Tile::Air),
+        ]))
+    }
+
+    #[test]
+    fn test_grid_new() {
+        let test_grid = create_test_grid();
+
+        assert_eq!(test_grid.grid, HashMap::from([
             (0, HashMap::from([
                 (0, Tile::Air),
                 (1, Tile::Air),
@@ -99,13 +146,7 @@ mod tests {
 
     #[test]
     fn test_grid_get() {
-        let test_grid = Grid::new(Vec::from([
-            (Coord{x: 0, y: 0}, Tile::Air),
-            (Coord{x: 0, y: 1}, Tile::Air),
-
-            (Coord{x: 1, y: 0}, Tile::Air),
-            (Coord{x: 1, y: 1}, Tile::Air),
-        ]));
+        let test_grid = create_test_grid();
 
         assert_eq!(
             test_grid.get(Coord { x: 0, y: 0 }),
@@ -115,13 +156,7 @@ mod tests {
 
     #[test]
     fn test_grid_get_mut() {
-        let mut test_grid = Grid::new(Vec::from([
-            (Coord{x: 0, y: 0}, Tile::Air),
-            (Coord{x: 0, y: 1}, Tile::Air),
-
-            (Coord{x: 1, y: 0}, Tile::Air),
-            (Coord{x: 1, y: 1}, Tile::Air),
-        ]));
+        let mut test_grid = create_test_grid();
 
         assert_eq!(
             test_grid.get_mut(Coord { x: 0, y: 0 }),
