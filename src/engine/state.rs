@@ -123,6 +123,17 @@ mod tests {
         assert_eq!(Coord::from((3, 5)), Coord{ x: 3, y: 5 }, "ERROR: Failed assertion while converting from (i32, i32) to Coord.");
     }
 
+    /* disabled because of problems with type coercion, unused anyway, not a priority
+    #[test]
+    fn test_coord_into() {
+        let test_coord = Coord{ x: 3, y: 5 };
+        let into_array: [i32;2] = test_coord.into();
+        let into_tuple: (i32, i32) = test_coord.into();
+        assert_eq!(into_array, [3, 5], "ERROR: Failed assertion while converting from Coord to [i32;2].");
+        assert_eq!(into_tuple, (3, 5), "ERROR: Failed assertion while converting from Coord to (i32, i32).");
+    }
+    */
+
 
     // ----- GRID TESTS -----
     #[test]
