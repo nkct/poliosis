@@ -7,7 +7,6 @@ enum Tile {
     Ground,
     Building { health: f32, tier: f32 , pressure: f32},
 }
-
 impl fmt::Display for Tile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
@@ -18,6 +17,16 @@ impl fmt::Display for Tile {
 struct Coord {
     x: i32,
     y: i32,
+}
+impl From<[i32;2]> for Coord {
+    fn from(arr: [i32;2]) -> Self {
+        return Coord{ x: arr[0], y: arr[1] };
+    }
+}
+impl From<(i32, i32)> for Coord {
+    fn from(tup: (i32, i32)) -> Self {
+        return Coord{ x: tup.0, y: tup.1};
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -96,6 +105,7 @@ impl Grid {
 mod tests {
     use super::*;
 
+    // ----- HELPER FUNCTIONS -----
     fn create_test_grid() -> Grid {
         return Grid::new(Vec::from([
             (Coord{x: 0, y: 0}, Tile::Air),
@@ -106,6 +116,15 @@ mod tests {
         ]))
     }
 
+    // ----- COORD TESTS -----
+    #[test]
+    fn test_coord_from() {
+        assert_eq!(Coord::from([3, 5]), Coord{ x: 3, y: 5 }, "ERROR: Failed assertion while converting from [i32;2] to Coord.");
+        assert_eq!(Coord::from((3, 5)), Coord{ x: 3, y: 5 }, "ERROR: Failed assertion while converting from (i32, i32) to Coord.");
+    }
+
+
+    // ----- GRID TESTS -----
     #[test]
     fn test_grid_intoiter() {
         let test_grid = create_test_grid();
