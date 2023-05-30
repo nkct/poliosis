@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
+#[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum Tile {
     Air,
@@ -41,11 +42,13 @@ impl IntoIterator for Grid {
         return self.flatten().into_iter();
     }
 }
+#[allow(dead_code)]
 impl Grid {
-    fn new(tiles: Vec<(Coord, Tile)>) -> Grid {
+    pub fn new<T: Into<Coord>>(tiles: Vec<(T, Tile)>) -> Grid {
         let mut grid = HashMap::new();
 
-        for (coord, tile) in tiles {
+        for (raw_coord, tile) in tiles {
+            let coord: Coord = raw_coord.into();
             let x = coord.x;
             let y = coord.y;
 
@@ -63,7 +66,7 @@ impl Grid {
         return Grid{grid};
     }
 
-    fn flatten(&self) -> HashMap<Coord, Tile> {
+    pub fn flatten(&self) -> HashMap<Coord, Tile> {
         let mut flat_grid: HashMap<Coord, Tile> = HashMap::new();
 
         for (x, col) in &self.grid {
@@ -75,14 +78,18 @@ impl Grid {
         return flat_grid;
     }
 
-    fn get(&self, coord: Coord) -> Option<&Tile> {
+    pub fn get<T: Into<Coord>>(&self, raw_coord: T) -> Option<&Tile> {
+        let coord: Coord = raw_coord.into();
+
         if let Some(col) = self.grid.get(&coord.x) {
             return col.get(&coord.y);
         } else {
             return None;
         }
     }
-    fn get_mut(&mut self, coord: Coord) -> Option<&mut Tile> {
+    pub fn get_mut<T: Into<Coord>>(&mut self, raw_coord: T) -> Option<&mut Tile> {
+        let coord: Coord = raw_coord.into();
+
         if let Some(col) = self.grid.get_mut(&coord.x) {
             return col.get_mut(&coord.y);
         } else {
@@ -90,10 +97,10 @@ impl Grid {
         }
     }
 
-    fn get_matching(&self, pattern: Tile) -> Vec<&Tile> {
+    pub fn get_matching(&self, pattern: Tile) -> Vec<&Tile> {
         todo!();
     }
-    fn get_matching_mut(&self, pattern: Tile) -> Vec<&mut Tile> {
+    pub fn get_matching_mut(&self, pattern: Tile) -> Vec<&mut Tile> {
         todo!();
     }
 }
