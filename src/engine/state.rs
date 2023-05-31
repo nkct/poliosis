@@ -29,6 +29,23 @@ impl From<(i32, i32)> for Coord {
         return Coord{ x: tup.0, y: tup.1};
     }
 }
+impl Coord {
+    fn origin() -> Coord {
+        return Coord{ x: 0, y: 0 };
+    }
+
+    fn spread(&self, other: Coord) -> Vec<Coord> {
+        let mut output: Vec<Coord> = Vec::new();
+
+        for x in self.x..=other.x {
+            for y in self.y..=other.y {
+                output.push(Coord { x, y })
+            }
+        }
+
+        return output;
+    }
+}
 
 #[derive(Debug, PartialEq)]
 struct Grid {
@@ -47,8 +64,8 @@ impl Grid {
     pub fn new<T: Into<Coord>>(tiles: Vec<(T, Tile)>) -> Grid {
         let mut grid = HashMap::new();
 
-        for (raw_coord, tile) in tiles {
-            let coord: Coord = raw_coord.into();
+        for (coord_like, tile) in tiles {
+            let coord: Coord = coord_like.into();
             let x = coord.x;
             let y = coord.y;
 
@@ -78,8 +95,8 @@ impl Grid {
         return flat_grid;
     }
 
-    pub fn get<T: Into<Coord>>(&self, raw_coord: T) -> Option<&Tile> {
-        let coord: Coord = raw_coord.into();
+    pub fn get<T: Into<Coord>>(&self, coord_like: T) -> Option<&Tile> {
+        let coord: Coord = coord_like.into();
 
         if let Some(col) = self.grid.get(&coord.x) {
             return col.get(&coord.y);
@@ -87,8 +104,8 @@ impl Grid {
             return None;
         }
     }
-    pub fn get_mut<T: Into<Coord>>(&mut self, raw_coord: T) -> Option<&mut Tile> {
-        let coord: Coord = raw_coord.into();
+    pub fn get_mut<T: Into<Coord>>(&mut self, coord_like: T) -> Option<&mut Tile> {
+        let coord: Coord = coord_like.into();
 
         if let Some(col) = self.grid.get_mut(&coord.x) {
             return col.get_mut(&coord.y);
@@ -140,6 +157,33 @@ mod tests {
         assert_eq!(into_tuple, (3, 5), "ERROR: Failed assertion while converting from Coord to (i32, i32).");
     }
     */
+
+    #[test]
+    fn test_coord_origin() {
+        assert_eq!(Coord::origin(), Coord{ x: 0, y: 0})
+    }
+
+    #[test]
+    fn test_coord_spread() {
+        let test_coord = Coord::origin();
+        
+        assert_eq!(
+            test_coord.spread(Coord { x: 2, y: 2 }),
+            vec![
+                Coord{ x: 0, y: 0},
+                Coord{ x: 0, y: 1},
+                Coord{ x: 0, y: 2},
+
+                Coord{ x: 1, y: 0},
+                Coord{ x: 1, y: 1},
+                Coord{ x: 1, y: 2},
+
+                Coord{ x: 2, y: 0},
+                Coord{ x: 2, y: 1},
+                Coord{ x: 2, y: 2},
+            ]
+        )
+    }
 
 
     // ----- GRID TESTS -----
