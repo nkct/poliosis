@@ -29,6 +29,7 @@ impl From<(i32, i32)> for Coord {
         return Coord{ x: tup.0, y: tup.1};
     }
 }
+#[allow(dead_code)]
 impl Coord {
     fn origin() -> Coord {
         return Coord{ x: 0, y: 0 };
@@ -61,7 +62,7 @@ impl IntoIterator for Grid {
 }
 #[allow(dead_code)]
 impl Grid {
-    pub fn new<T: Into<Coord>>(tiles: Vec<(T, Tile)>) -> Grid {
+    pub fn new<C: Into<Coord>>(tiles: Vec<(C, Tile)>) -> Grid {
         let mut grid = HashMap::new();
 
         for (coord_like, tile) in tiles {
@@ -95,7 +96,7 @@ impl Grid {
         return flat_grid;
     }
 
-    pub fn get<T: Into<Coord>>(&self, coord_like: T) -> Option<&Tile> {
+    pub fn get<C: Into<Coord>>(&self, coord_like: C) -> Option<&Tile> {
         let coord: Coord = coord_like.into();
 
         if let Some(col) = self.grid.get(&coord.x) {
@@ -104,7 +105,7 @@ impl Grid {
             return None;
         }
     }
-    pub fn get_mut<T: Into<Coord>>(&mut self, coord_like: T) -> Option<&mut Tile> {
+    pub fn get_mut<C: Into<Coord>>(&mut self, coord_like: C) -> Option<&mut Tile> {
         let coord: Coord = coord_like.into();
 
         if let Some(col) = self.grid.get_mut(&coord.x) {
@@ -114,11 +115,27 @@ impl Grid {
         }
     }
 
-    pub fn get_matching(&self, pattern: Tile) -> Vec<&Tile> {
+    pub fn get_matching(&self, _pattern: Tile) -> Vec<&Tile> {
         todo!();
     }
-    pub fn get_matching_mut(&self, pattern: Tile) -> Vec<&mut Tile> {
+    pub fn get_matching_mut(&self, _pattern: Tile) -> Vec<&mut Tile> {
         todo!();
+    }
+
+    pub fn insert<C: Into<Coord>>(&mut self, coord_like: C, tile: Tile) {
+        let coord: Coord = coord_like.into();
+        let x = coord.x;
+        let y = coord.y;
+
+        if !self.grid.contains_key(&x) {
+            self.grid.insert(x, HashMap::from([
+                (y, tile)
+            ]));
+        } else{
+            self.grid.get_mut(&x)
+                .unwrap()
+                .insert(y, tile);
+        }
     }
 }
 
@@ -165,10 +182,8 @@ mod tests {
 
     #[test]
     fn test_coord_spread() {
-        let test_coord = Coord::origin();
-        
         assert_eq!(
-            test_coord.spread(Coord { x: 2, y: 2 }),
+            Coord::origin().spread(Coord { x: 2, y: 2 }),
             vec![
                 Coord{ x: 0, y: 0},
                 Coord{ x: 0, y: 1},
@@ -242,6 +257,25 @@ mod tests {
         assert_eq!(
             test_grid.get_mut(Coord { x: 0, y: 0 }),
             Some(&mut Tile::Air)
+        )
+    }
+
+    #[test]
+    fn test_grid_insert() {
+        let mut test_grid = create_test_grid();
+        test_grid.insert((2, 0), Tile::Ground);
+        
+        assert_eq!(
+            test_grid,
+            Grid::new(Vec::from([
+                (Coord{x: 0, y: 0}, Tile::Air),
+                (Coord{x: 0, y: 1}, Tile::Air),
+    
+                (Coord{x: 1, y: 0}, Tile::Air),
+                (Coord{x: 1, y: 1}, Tile::Air),
+                
+                (Coord{x: 2, y: 0}, Tile::Ground),
+            ]))
         )
     }
 }
