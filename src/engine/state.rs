@@ -52,6 +52,19 @@ impl Coord {
 struct Grid {
     grid: HashMap<i32, HashMap<i32, Tile>>,
 }
+macro_rules! get_matching {
+    ($collection: expr, $pattern: pat) => {
+        {
+            let mut matched = Vec::new(); 
+            for (coord, tile) in $collection {
+                if matches!((coord, tile), $pattern) {
+                    matched.push(tile);
+                }
+            }
+            matched
+        }
+    };
+}
 impl IntoIterator for Grid {
     type Item = (Coord, Tile);
     type IntoIter = std::collections::hash_map::IntoIter<Coord, Tile>;
@@ -145,6 +158,26 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_matching() {
+        let test_grid = Grid::new(Vec::from([
+            (Coord{x: 0, y: 0}, Tile::Air),
+            (Coord{x: 0, y: 1}, Tile::Air),
+            (Coord{x: 0, y: 2}, Tile::Air),
+
+            (Coord{x: 1, y: 0}, Tile::Ground),
+            (Coord{x: 1, y: 1}, Tile::Ground),
+            (Coord{x: 1, y: 2}, Tile::Ground),
+
+            (Coord{x: 2, y: 0}, Tile::Air),
+            (Coord{x: 2, y: 1}, Tile::Ground),
+            (Coord{x: 2, y: 2}, Tile::Air),
+        ]));
+
+        let matched = get_matching!(test_grid, (_, _));
+        println!("{:?}", matched);
+    }
 
     // ----- HELPER FUNCTIONS -----
     fn create_test_grid() -> Grid {
