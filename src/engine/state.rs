@@ -14,7 +14,7 @@ impl fmt::Display for Tile {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 struct Coord {
     x: i32,
     y: i32,
@@ -52,19 +52,21 @@ impl Coord {
 struct Grid {
     grid: HashMap<i32, HashMap<i32, Tile>>,
 }
+
 macro_rules! get_matching {
     ($collection: expr, $pattern: pat) => {
         {
             let mut matched = Vec::new(); 
             for (coord, tile) in $collection {
                 if matches!((coord, tile), $pattern) {
-                    matched.push(tile);
+                    matched.push((coord, tile));
                 }
             }
             matched
         }
     };
 }
+
 impl IntoIterator for Grid {
     type Item = (Coord, Tile);
     type IntoIter = std::collections::hash_map::IntoIter<Coord, Tile>;
@@ -128,13 +130,6 @@ impl Grid {
         }
     }
 
-    pub fn get_matching(&self, _pattern: Tile) -> Vec<&Tile> {
-        todo!();
-    }
-    pub fn get_matching_mut(&self, _pattern: Tile) -> Vec<&mut Tile> {
-        todo!();
-    }
-
     pub fn insert<C: Into<Coord>>(&mut self, coord_like: C, tile: Tile) {
         let coord: Coord = coord_like.into();
         let x = coord.x;
@@ -159,6 +154,7 @@ impl Grid {
 mod tests {
     use super::*;
 
+    // ----- TEST MACROS -----
     #[test]
     fn test_get_matching() {
         let test_grid = Grid::new(Vec::from([
@@ -175,8 +171,11 @@ mod tests {
             (Coord{x: 2, y: 2}, Tile::Air),
         ]));
 
-        let matched = get_matching!(test_grid, (_, _));
-        println!("{:?}", matched);
+        let matched = get_matching!(test_grid, (Coord { x: _, y: 1}, Tile::Ground));
+        assert_eq!(matched, Vec::from([
+            (Coord{x: 2, y: 1}, Tile::Ground),
+            (Coord{x: 1, y: 1}, Tile::Ground),
+        ]))
     }
 
     // ----- HELPER FUNCTIONS -----
