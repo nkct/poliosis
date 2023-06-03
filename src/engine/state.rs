@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::cmp::{ Ord, Ordering };
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -14,7 +15,7 @@ impl fmt::Display for Tile {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Coord {
     x: i32,
     y: i32,
@@ -173,8 +174,8 @@ mod tests {
 
         let matched = get_matching!(test_grid, (Coord { x: _, y: 1}, Tile::Ground));
         assert_eq!(matched, Vec::from([
-            (Coord{x: 2, y: 1}, Tile::Ground),
             (Coord{x: 1, y: 1}, Tile::Ground),
+            (Coord{x: 2, y: 1}, Tile::Ground),
         ]))
     }
 
@@ -190,6 +191,22 @@ mod tests {
     }
 
     // ----- COORD TESTS -----
+    #[test]
+    fn test_coord_ord() {
+        assert_eq!(Coord{ x: 1, y: 1 }.cmp(&Coord{ x: 0, y: 0 }), Ordering::Greater);
+        assert_eq!(Coord{ x: 1, y: 0 }.cmp(&Coord{ x: 0, y: 0 }), Ordering::Greater);
+        assert_eq!(Coord{ x: 1, y: 0 }.cmp(&Coord{ x: 0, y: 1 }), Ordering::Greater);
+
+        assert_eq!(Coord{ x: 0, y: 0 }.cmp(&Coord{ x: 1, y: 1 }), Ordering::Less);
+        assert_eq!(Coord{ x: 0, y: 0 }.cmp(&Coord{ x: 1, y: 0 }), Ordering::Less);
+        assert_eq!(Coord{ x: 0, y: 1 }.cmp(&Coord{ x: 1, y: 1 }), Ordering::Less);
+
+        assert_eq!(Coord{ x: 0, y: 0 }.cmp(&Coord{ x: 0, y: 0 }), Ordering::Equal);
+        assert_eq!(Coord{ x: 1, y: 1 }.cmp(&Coord{ x: 1, y: 1 }), Ordering::Equal);
+        assert_eq!(Coord{ x: 1, y: 0 }.cmp(&Coord{ x: 1, y: 0 }), Ordering::Equal);
+        assert_eq!(Coord{ x: 0, y: 1 }.cmp(&Coord{ x: 0, y: 1 }), Ordering::Equal);
+    }
+
     #[test]
     fn test_coord_from() {
         assert_eq!(Coord::from([3, 5]), Coord{ x: 3, y: 5 }, "ERROR: Failed assertion while converting from [i32;2] to Coord.");
