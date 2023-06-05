@@ -3,12 +3,50 @@ use std::fmt;
 use std::cmp::{ Ord, Ordering };
 
 #[allow(dead_code)]
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialOrd)]
 enum Tile {
     Air,
     Ground,
     Building { health: f32, tier: f32 , pressure: f32},
 }
+impl PartialEq for Tile {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            Tile::Air => { matches!(other, Tile::Air) },
+            Tile::Ground => { matches!(other, Tile::Ground) },
+            Tile::Building{ .. } => { matches!(other, Tile::Building { .. }) },
+        }
+    }
+}
+impl Eq for Tile {}
+impl Ord for Tile {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self {
+            Tile::Air => {
+                match other {
+                    Tile::Air => Ordering::Equal,
+                    Tile::Ground => Ordering::Greater,
+                    Tile::Building{..} => Ordering::Greater,
+                }
+            }
+            Tile::Ground => {
+                match other {
+                    Tile::Air => Ordering::Less,
+                    Tile::Ground => Ordering::Equal,
+                    Tile::Building{..} => Ordering::Greater,
+                }
+            }
+            Tile::Building { .. } => {
+                match other {
+                    Tile::Air => Ordering::Less,
+                    Tile::Ground => Ordering::Less,
+                    Tile::Building{..} => Ordering::Equal,
+                }
+            }
+        }
+    }
+}
+
 impl fmt::Display for Tile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
