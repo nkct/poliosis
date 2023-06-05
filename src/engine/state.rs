@@ -96,7 +96,9 @@ macro_rules! get_matching {
     ($collection: expr, $pattern: pat) => {
         {
             let mut matched = Vec::new(); 
-            for (coord, tile) in $collection {
+            let mut grid_list: Vec<(Coord, Tile)> = $collection.into_iter().collect();
+            grid_list.sort();
+            for (coord, tile) in grid_list {
                 if matches!((coord, tile), $pattern) {
                     matched.push((coord, tile));
                 }
