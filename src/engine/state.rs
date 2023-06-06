@@ -70,9 +70,7 @@ impl From<(i32, i32)> for Coord {
 }
 #[allow(dead_code)]
 impl Coord {
-    fn origin() -> Coord {
-        return Coord{ x: 0, y: 0 };
-    }
+    const ORIGIN: Coord = Coord{ x: 0, y: 0 };
 
     fn spread(&self, other: Coord) -> Vec<Coord> {
         let mut output: Vec<Coord> = Vec::new();
@@ -253,26 +251,15 @@ mod tests {
         assert_eq!(Coord::from((3, 5)), Coord{ x: 3, y: 5 }, "ERROR: Failed assertion while converting from (i32, i32) to Coord.");
     }
 
-    /* disabled because of problems with type coercion, unused anyway, not a priority
-    #[test]
-    fn test_coord_into() {
-        let test_coord = Coord{ x: 3, y: 5 };
-        let into_array: [i32;2] = test_coord.into();
-        let into_tuple: (i32, i32) = test_coord.into();
-        assert_eq!(into_array, [3, 5], "ERROR: Failed assertion while converting from Coord to [i32;2].");
-        assert_eq!(into_tuple, (3, 5), "ERROR: Failed assertion while converting from Coord to (i32, i32).");
-    }
-    */
-
     #[test]
     fn test_coord_origin() {
-        assert_eq!(Coord::origin(), Coord{ x: 0, y: 0})
+        assert_eq!(Coord::ORIGIN, Coord{ x: 0, y: 0})
     }
 
     #[test]
     fn test_coord_spread() {
         assert_eq!(
-            Coord::origin().spread(Coord { x: 2, y: 2 }),
+            Coord::ORIGIN.spread(Coord { x: 2, y: 2 }),
             vec![
                 Coord{ x: 0, y: 0},
                 Coord{ x: 0, y: 1},
@@ -295,8 +282,8 @@ mod tests {
     fn test_grid_intoiter() {
         let test_grid = create_test_grid();
 
-        for (_, _) in test_grid {
-            assert!(true)
+        for elem in test_grid {
+            assert!(matches!(elem, (Coord { .. }, Tile::Air)))
         }
     }
 
