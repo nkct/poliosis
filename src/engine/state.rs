@@ -90,13 +90,12 @@ struct Grid {
     grid: HashMap<i32, HashMap<i32, Tile>>,
 }
 
+#[allow(unused_macros)]
 macro_rules! get_matching {
     ($collection: expr, $pattern: pat) => {
         {
             let mut matched = Vec::new(); 
-            let mut grid_list: Vec<(Coord, Tile)> = $collection.into_iter().collect();
-            grid_list.sort();
-            for (coord, tile) in grid_list {
+            for (coord, tile) in $collection.sorted() {
                 if matches!((coord, tile), $pattern) {
                     matched.push((coord, tile));
                 }
@@ -148,6 +147,13 @@ impl Grid {
         }
 
         return flat_grid;
+    }
+
+    pub fn sorted(self) -> Vec<(Coord, Tile)> {
+        let mut sorted: Vec<(Coord, Tile)> = self.into_iter().collect();
+        sorted.sort();
+
+        return sorted;
     }
 
     pub fn get<C: Into<Coord>>(&self, coord_like: C) -> Option<&Tile> {
@@ -292,6 +298,19 @@ mod tests {
         let test_grid = create_test_grid();
         
         assert_eq!(test_grid.flatten(), HashMap::from([
+            (Coord{x: 0, y: 0}, Tile::Air),
+            (Coord{x: 0, y: 1}, Tile::Air),
+
+            (Coord{x: 1, y: 0}, Tile::Air),
+            (Coord{x: 1, y: 1}, Tile::Air),
+        ]))
+    }
+
+    #[test]
+    fn test_grid_sorted() {
+        let test_grid = create_test_grid();
+
+        assert_eq!(test_grid.sorted(), Vec::from([
             (Coord{x: 0, y: 0}, Tile::Air),
             (Coord{x: 0, y: 1}, Tile::Air),
 
