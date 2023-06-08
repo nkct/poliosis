@@ -204,6 +204,19 @@ impl Grid {
         return ref_vec;
     }
 
+    pub fn to_mut_ref_vec(&mut self) -> Vec<(Coord, &mut Tile)> {
+        let mut ref_vec: Vec<(Coord, &mut Tile)> = Vec::new();
+
+        for (&x, col) in &mut self.grid {
+            for (&y, tile) in col {
+                ref_vec.push((Coord { x, y }, tile));
+            }
+        }
+
+        ref_vec.sort_unstable_by( |a, b| a.0.cmp(&b.0) );
+        return ref_vec;
+    }
+
 }
 
 
@@ -398,6 +411,19 @@ mod tests {
 
             (Coord{x: 1, y: 0}, &Tile::Air),
             (Coord{x: 1, y: 1}, &Tile::Air),
+        ]))
+    }
+
+    #[test]
+    fn test_grid_to_mut_ref_vec() {
+        let mut test_grid = create_test_grid();
+
+        assert_eq!(test_grid.to_mut_ref_vec(), Vec::from([
+            (Coord{x: 0, y: 0}, &mut Tile::Air),
+            (Coord{x: 0, y: 1}, &mut Tile::Air),
+
+            (Coord{x: 1, y: 0}, &mut Tile::Air),
+            (Coord{x: 1, y: 1}, &mut Tile::Air),
         ]))
     }
 }
