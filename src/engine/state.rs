@@ -1,52 +1,15 @@
 use std::collections::HashMap;
 use std::fmt;
+#[allow(unused_imports)]
 use std::cmp::{ Ord, Ordering };
 
 #[allow(dead_code)]
-#[derive(Debug, Copy, Clone, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum Tile {
     Air,
     Ground,
     Building { health: f32, tier: f32 , pressure: f32},
 }
-impl PartialEq for Tile {
-    fn eq(&self, other: &Self) -> bool {
-        match self {
-            Tile::Air => { matches!(other, Tile::Air) },
-            Tile::Ground => { matches!(other, Tile::Ground) },
-            Tile::Building{ .. } => { matches!(other, Tile::Building { .. }) },
-        }
-    }
-}
-impl Eq for Tile {}
-impl Ord for Tile {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self {
-            Tile::Air => {
-                match other {
-                    Tile::Air => Ordering::Equal,
-                    Tile::Ground => Ordering::Greater,
-                    Tile::Building{..} => Ordering::Greater,
-                }
-            }
-            Tile::Ground => {
-                match other {
-                    Tile::Air => Ordering::Less,
-                    Tile::Ground => Ordering::Equal,
-                    Tile::Building{..} => Ordering::Greater,
-                }
-            }
-            Tile::Building { .. } => {
-                match other {
-                    Tile::Air => Ordering::Less,
-                    Tile::Ground => Ordering::Less,
-                    Tile::Building{..} => Ordering::Equal,
-                }
-            }
-        }
-    }
-}
-
 impl fmt::Display for Tile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
@@ -95,9 +58,9 @@ macro_rules! get_matching {
     ($collection: expr, $pattern: pat) => {
         {
             let mut matched = Vec::new(); 
-            for (coord, tile) in $collection.sorted() {
-                if matches!((coord, tile), $pattern) {
-                    matched.push((coord, tile));
+            for item in $collection {
+                if matches!(item, $pattern) {
+                    matched.push(item);
                 }
             }
             matched
@@ -163,13 +126,6 @@ impl Grid {
         }
 
         return flat_grid;
-    }
-
-    pub fn sorted(self) -> Vec<(Coord, Tile)> {
-        let mut sorted: Vec<(Coord, Tile)> = self.into_iter().collect();
-        sorted.sort();
-
-        return sorted;
     }
 
     pub fn get<C: Into<Coord>>(&self, coord_like: C) -> Option<&Tile> {
@@ -245,7 +201,7 @@ mod tests {
     // ----- TEST MACROS -----
     #[test]
     fn test_get_matching() {
-        let test_grid = Grid::new(Vec::from([
+        let mut test_grid = Grid::new(Vec::from([
             (Coord{x: 0, y: 0}, Tile::Air),
             (Coord{x: 0, y: 1}, Tile::Air),
             (Coord{x: 0, y: 2}, Tile::Air),
@@ -259,11 +215,23 @@ mod tests {
             (Coord{x: 2, y: 2}, Tile::Air),
         ]));
 
+        let matched = get_matching!(&test_grid, (Coord { x: _, y: 1}, Tile::Ground));
+        assert_eq!(matched, Vec::from([
+            (Coord{x: 1, y: 1}, &Tile::Ground),
+            (Coord{x: 2, y: 1}, &Tile::Ground),
+        ]));
+
+        let matched = get_matching!(&mut test_grid, (Coord { x: _, y: 1}, Tile::Ground));
+        assert_eq!(matched, Vec::from([
+            (Coord{x: 1, y: 1}, &mut Tile::Ground),
+            (Coord{x: 2, y: 1}, &mut Tile::Ground),
+        ]));
+
         let matched = get_matching!(test_grid, (Coord { x: _, y: 1}, Tile::Ground));
         assert_eq!(matched, Vec::from([
             (Coord{x: 1, y: 1}, Tile::Ground),
             (Coord{x: 2, y: 1}, Tile::Ground),
-        ]))
+        ]));
     }
 
     // ----- HELPER FUNCTIONS -----
@@ -359,19 +327,6 @@ mod tests {
         let test_grid = create_test_grid();
         
         assert_eq!(test_grid.flatten(), HashMap::from([
-            (Coord{x: 0, y: 0}, Tile::Air),
-            (Coord{x: 0, y: 1}, Tile::Air),
-
-            (Coord{x: 1, y: 0}, Tile::Air),
-            (Coord{x: 1, y: 1}, Tile::Air),
-        ]))
-    }
-
-    #[test]
-    fn test_grid_sorted() {
-        let test_grid = create_test_grid();
-
-        assert_eq!(test_grid.sorted(), Vec::from([
             (Coord{x: 0, y: 0}, Tile::Air),
             (Coord{x: 0, y: 1}, Tile::Air),
 
