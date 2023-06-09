@@ -52,22 +52,6 @@ impl Coord {
 struct Grid {
     grid: HashMap<i32, HashMap<i32, Tile>>,
 }
-
-#[allow(unused_macros)]
-macro_rules! get_matching {
-    ($collection: expr, $pattern: pat) => {
-        {
-            let mut matched = Vec::new(); 
-            for item in $collection {
-                if matches!(item, $pattern) {
-                    matched.push(item);
-                }
-            }
-            matched
-        }
-    };
-}
-
 impl IntoIterator for Grid {
     type Item = (Coord, Tile);
     type IntoIter = std::collections::hash_map::IntoIter<Coord, Tile>;
@@ -188,51 +172,28 @@ impl Grid {
         ref_vec.sort_unstable_by( |a, b| a.0.cmp(&b.0) );
         return ref_vec;
     }
-
 }
 
+#[allow(unused_macros)]
+macro_rules! get_matching {
+    ($collection: expr, $pattern: pat) => {
+        {
+            let mut matched = Vec::new(); 
+            for item in $collection {
+                if matches!(item, $pattern) {
+                    matched.push(item);
+                }
+            }
+            matched
+        }
+    };
+}
 
 
 // ----- TESTS -----
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    // ----- TEST MACROS -----
-    #[test]
-    fn test_get_matching() {
-        let mut test_grid = Grid::new(Vec::from([
-            (Coord{x: 0, y: 0}, Tile::Air),
-            (Coord{x: 0, y: 1}, Tile::Air),
-            (Coord{x: 0, y: 2}, Tile::Air),
-
-            (Coord{x: 1, y: 0}, Tile::Ground),
-            (Coord{x: 1, y: 1}, Tile::Ground),
-            (Coord{x: 1, y: 2}, Tile::Ground),
-
-            (Coord{x: 2, y: 0}, Tile::Air),
-            (Coord{x: 2, y: 1}, Tile::Ground),
-            (Coord{x: 2, y: 2}, Tile::Air),
-        ]));
-
-        let matched = get_matching!(&test_grid, (Coord { x: _, y: 1}, Tile::Ground));
-        assert_eq!(matched, Vec::from([
-            (Coord{x: 1, y: 1}, &Tile::Ground),
-            (Coord{x: 2, y: 1}, &Tile::Ground),
-        ]));
-
-        let matched = get_matching!(&mut test_grid, (Coord { x: _, y: 1}, Tile::Ground));
-        assert_eq!(matched, Vec::from([
-            (Coord{x: 1, y: 1}, &mut Tile::Ground),
-            (Coord{x: 2, y: 1}, &mut Tile::Ground),
-        ]));
-
-        let matched = get_matching!(test_grid, (Coord { x: _, y: 1}, Tile::Ground));
-        assert_eq!(matched, Vec::from([
-            (Coord{x: 1, y: 1}, Tile::Ground),
-            (Coord{x: 2, y: 1}, Tile::Ground),
-        ]));
-    }
+    use super::*;    
 
     // ----- HELPER FUNCTIONS -----
     fn create_test_grid() -> Grid {
@@ -414,5 +375,41 @@ mod tests {
             (Coord{x: 1, y: 0}, &mut Tile::Air),
             (Coord{x: 1, y: 1}, &mut Tile::Air),
         ]))
+    }
+
+    // ----- TEST MACROS -----
+    #[test]
+    fn test_get_matching() {
+        let mut test_grid = Grid::new(Vec::from([
+            (Coord{x: 0, y: 0}, Tile::Air),
+            (Coord{x: 0, y: 1}, Tile::Air),
+            (Coord{x: 0, y: 2}, Tile::Air),
+
+            (Coord{x: 1, y: 0}, Tile::Ground),
+            (Coord{x: 1, y: 1}, Tile::Ground),
+            (Coord{x: 1, y: 2}, Tile::Ground),
+
+            (Coord{x: 2, y: 0}, Tile::Air),
+            (Coord{x: 2, y: 1}, Tile::Ground),
+            (Coord{x: 2, y: 2}, Tile::Air),
+        ]));
+
+        let matched = get_matching!(&test_grid, (Coord { x: _, y: 1}, Tile::Ground));
+        assert_eq!(matched, Vec::from([
+            (Coord{x: 1, y: 1}, &Tile::Ground),
+            (Coord{x: 2, y: 1}, &Tile::Ground),
+        ]));
+
+        let matched = get_matching!(&mut test_grid, (Coord { x: _, y: 1}, Tile::Ground));
+        assert_eq!(matched, Vec::from([
+            (Coord{x: 1, y: 1}, &mut Tile::Ground),
+            (Coord{x: 2, y: 1}, &mut Tile::Ground),
+        ]));
+
+        let matched = get_matching!(test_grid, (Coord { x: _, y: 1}, Tile::Ground));
+        assert_eq!(matched, Vec::from([
+            (Coord{x: 1, y: 1}, Tile::Ground),
+            (Coord{x: 2, y: 1}, Tile::Ground),
+        ]));
     }
 }
