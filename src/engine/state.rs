@@ -113,6 +113,22 @@ impl IntoIterator for Grid {
         return self.flatten().into_iter();
     }
 }
+impl<'a> IntoIterator for &'a Grid {
+    type Item = (Coord, &'a Tile);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.to_ref_vec().into_iter();
+    }
+}
+impl<'a> IntoIterator for &'a mut Grid {
+    type Item = (Coord, &'a mut Tile);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.to_mut_ref_vec().into_iter();
+    }
+}
 #[allow(dead_code)]
 impl Grid {
     pub fn new<C: Into<Coord>>(tiles: Vec<(C, Tile)>) -> Grid {
@@ -317,6 +333,24 @@ mod tests {
 
         for elem in test_grid {
             assert!(matches!(elem, (Coord { .. }, Tile::Air)))
+        }
+    }
+
+    #[test]
+    fn test_grid_ref_intoiter() {
+        let test_grid = create_test_grid();
+
+        for elem in &test_grid {
+            assert!(matches!(elem, (Coord { .. }, &Tile::Air)))
+        }
+    }
+
+    #[test]
+    fn test_grid_mut_ref_intoiter() {
+        let mut test_grid = create_test_grid();
+
+        for elem in &mut test_grid {
+            assert!(matches!(elem, (Coord { .. }, &mut Tile::Air)))
         }
     }
 
