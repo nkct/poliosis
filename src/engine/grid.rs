@@ -5,7 +5,7 @@ use std::cmp::{ Ord, Ordering };
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq)]
-enum Tile {
+pub enum Tile {
     Air,
     Ground,
     Building { health: f32, tier: f32 , pressure: f32},
@@ -17,7 +17,7 @@ impl fmt::Display for Tile {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Coord {
+pub struct Coord {
     x: i32,
     y: i32,
 }
@@ -49,7 +49,7 @@ impl Coord {
 }
 
 #[derive(Debug, PartialEq)]
-struct Grid {
+pub struct Grid {
     grid: HashMap<i32, HashMap<i32, Tile>>,
 }
 impl IntoIterator for Grid {
