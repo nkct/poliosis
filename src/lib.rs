@@ -1243,9 +1243,13 @@ impl State {
 
         let size = window.inner_size();
         
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor{ 
+            backends: wgpu::Backends::all(), 
+            //consider using Dxc here
+            dx12_shader_compiler: wgpu::Dx12Compiler::Fxc 
+        });
 
-        let surface = unsafe { instance.create_surface(window) };
+        let surface = unsafe { instance.create_surface(window).unwrap() };
         let adapter = instance.request_adapter(
             &wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -1263,16 +1267,23 @@ impl State {
             None, // Trace path
         ).await.unwrap();
 
+        let surface_caps = surface.get_capabilities(&adapter);
+        let surface_format = surface_caps.formats.iter()
+            .copied()
+            .find(|f| f.is_srgb())            
+            .unwrap_or(surface_caps.formats[0]);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface.get_preferred_format(&adapter).unwrap(),
+            format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Fifo,
+            present_mode: surface_caps.present_modes[0],
+            alpha_mode: surface_caps.alpha_modes[0],
+            view_formats: vec![],
         };
         surface.configure(&device, &config);
 
-        let shader = device.create_shader_module(&wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -1302,11 +1313,11 @@ impl State {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[wgpu::ColorTargetState {
+                targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE), // experiment with overlapping shapes and this
                     write_mask: wgpu::ColorWrites::ALL,
-                }],
+                })],
             }),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -1343,14 +1354,14 @@ impl State {
         );
 
 
-        let mut staging_belt = wgpu::util::StagingBelt::new(1024);
+        let staging_belt = wgpu::util::StagingBelt::new(1024);
 
         let inconsolata = ab_glyph::FontArc::try_from_slice(include_bytes!(
             "Inconsolata-Regular.ttf"
         )).unwrap();
     
-        let mut glyph_brush = GlyphBrushBuilder::using_font(inconsolata)
-            .build(&device, surface.get_preferred_format(&adapter).unwrap());
+        let glyph_brush = GlyphBrushBuilder::using_font(inconsolata)
+            .build(&device, wgpu::TextureFormat::Bgra8UnormSrgb);
 
         State {
             size,
@@ -1405,7 +1416,7 @@ impl State {
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
-            color_attachments: &[wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &view,
                 resolve_target: None,
                 ops: wgpu::Operations {
@@ -1417,7 +1428,7 @@ impl State {
                     }),
                     store: true,
                 },
-            }],
+            })],
             depth_stencil_attachment: None,
         });
         
