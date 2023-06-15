@@ -237,23 +237,15 @@ mod tests {
     fn test_renderer() {
         async fn run() {
             let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
-            let window = WindowBuilder::new().build(&event_loop).unwrap();
+            let window = Window::new(&event_loop).unwrap();
 
             let mut renderer = Renderer::new(&window).await;
 
-            event_loop.run(move |event, _, control_flow| match event {
-                Event::MainEventsCleared => {
-                    window.request_redraw();
-                },
+            event_loop.run(move |event, _, _| match event {
                 Event::RedrawRequested(_) => {
                     renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], [1.0, 0.0, 0.0]);
         
-                    match renderer.render() {
-                        Ok(_) => {}
-                        Err(wgpu::SurfaceError::Lost) => renderer.resize(renderer.size),
-                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        Err(e) => eprintln!("{:?}", e),
-                    }
+                    renderer.render();
                 }
                 _ => {}
             });
