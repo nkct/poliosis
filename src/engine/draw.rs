@@ -22,11 +22,19 @@ impl Vertex {
     }
 }
 
-struct TwinBuffers {
+struct Renderer {
+    size: winit::dpi::PhysicalSize<u32>,
+    surface: wgpu::Surface,
+    device: wgpu::Device,
+    queue: wgpu::Queue,
+    config: wgpu::SurfaceConfiguration,
+
+    render_pipeline: wgpu::RenderPipeline,
+
     vertices: Vec<Vertex>,
     indices: Vec<u16>,
 }
-impl TwinBuffers {
+impl Renderer {
     fn draw_triangle(&mut self, points: [[f32;2];3], color: [f32;3]) {
         self.vertices.push(Vertex::new([points[0][0], points[0][1], 0.0], color));
         self.vertices.push(Vertex::new([points[1][0], points[1][1], 0.0], color));
@@ -38,22 +46,8 @@ impl TwinBuffers {
         self.indices.push((offset + 1) as u16);
         self.indices.push((offset + 2) as u16);
     }
-}
 
-struct Renderer {
-    size: winit::dpi::PhysicalSize<u32>,
-    surface: wgpu::Surface,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
-
-    render_pipeline: wgpu::RenderPipeline,
-
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-}
-impl Renderer {
-    async fn new(window: &Window, buffers: &TwinBuffers) -> Self {
+    async fn new(window: &Window) -> Self {
 
         let size = window.inner_size();
         
@@ -151,21 +145,9 @@ impl Renderer {
             multiview: None,
         });
         
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(&buffers.vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let vertices = Vec::new();
 
-        let index_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(&buffers.indices),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
+        let indices = Vec::new();
 
 
         Renderer {
@@ -177,8 +159,8 @@ impl Renderer {
 
             render_pipeline,
 
-            vertex_buffer,
-            index_buffer,
+            vertices,
+            indices,
         }
     }
 
@@ -191,30 +173,28 @@ impl Renderer {
         }
     }
 
-    fn update_buffers(&mut self, buffers: &mut TwinBuffers) {
-        self.vertex_buffer = self.device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(&buffers.vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
-
-        self.index_buffer = self.device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(&buffers.indices),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
-    }
-
-    fn render(&mut self, indices: &Vec<u16>) -> Result<(), wgpu::SurfaceError> {
+    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None, });
+
+        let vertex_buffer = self.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&self.vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+
+        let index_buffer = self.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&self.indices),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
@@ -233,11 +213,11 @@ impl Renderer {
             })],
             depth_stencil_attachment: None,
         });
-        
+
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
+        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+        render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.draw_indexed(0..self.indices.len() as u32, 0, 0..1);
 
         drop(render_pass);
     
@@ -259,23 +239,16 @@ mod tests {
             let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
             let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-            let mut buffers = TwinBuffers{ vertices: Vec::new(), indices: Vec::new() };
-
-            let mut renderer = Renderer::new(&window, &buffers).await;
+            let mut renderer = Renderer::new(&window).await;
 
             event_loop.run(move |event, _, control_flow| match event {
                 Event::MainEventsCleared => {
                     window.request_redraw();
                 },
                 Event::RedrawRequested(_) => {
-                    buffers.vertices = Vec::new();
-                    buffers.indices = Vec::new();
-
-                    buffers.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], [1.0, 0.0, 0.0]);
-
-                    renderer.update_buffers(&mut buffers);
+                    renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], [1.0, 0.0, 0.0]);
         
-                    match renderer.render(&buffers.indices) {
+                    match renderer.render() {
                         Ok(_) => {}
                         Err(wgpu::SurfaceError::Lost) => renderer.resize(renderer.size),
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
