@@ -6,6 +6,41 @@ use winit::{
 };
 use wgpu::util::DeviceExt;
 
+#[derive( Debug, PartialEq )]
+struct Color {
+    r: f32,
+    g: f32,
+    b: f32,
+    a: f32,
+}
+impl From<[f32;3]> for Color {
+    fn from(arr: [f32;3]) -> Self {
+        return Color{ r: arr[0], g: arr[1], b: arr[2], a: 1. };
+    }
+}
+impl From<(f32, f32, f32)> for Color {
+    fn from(tup: (f32, f32, f32)) -> Self {
+        return Color{ r: tup.0, g: tup.1, b: tup.2, a: 1.};
+    }
+}
+impl From<[f32;4]> for Color {
+    fn from(arr: [f32;4]) -> Self {
+        return Color{ r: arr[0], g: arr[1], b: arr[2], a: arr[3] };
+    }
+}
+impl From<(f32, f32, f32, f32)> for Color {
+    fn from(tup: (f32, f32, f32, f32)) -> Self {
+        return Color{ r: tup.0, g: tup.1, b: tup.2, a: tup.3};
+    }
+}
+impl Color {
+    const RED:         Self = Color{ r: 1., g: 0., b: 0., a: 1. };
+    const GREEN:       Self = Color{ r: 0., g: 1., b: 0., a: 1. };
+    const BLUE:        Self = Color{ r: 0., g: 0., b: 1., a: 1. };
+    const BLACK:       Self = Color{ r: 0., g: 0., b: 0., a: 1. };
+    const WHITE:       Self = Color{ r: 1., g: 1., b: 1., a: 1. };
+    const TRANSPARENT: Self = Color{ r: 0., g: 0., b: 0., a: 0. };
+}
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
