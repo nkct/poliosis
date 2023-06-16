@@ -269,20 +269,33 @@ mod tests {
     use super::*;    
 
     #[test]
+    fn test_color_consts() {
+        assert_eq!(Color::RED,         Color{ r: 1., g: 0., b: 0., a: 1. });
+        assert_eq!(Color::GREEN,       Color{ r: 0., g: 1., b: 0., a: 1. });
+        assert_eq!(Color::BLUE,        Color{ r: 0., g: 0., b: 1., a: 1. });
+        assert_eq!(Color::BLACK,       Color{ r: 0., g: 0., b: 0., a: 1. });
+        assert_eq!(Color::WHITE,       Color{ r: 1., g: 1., b: 1., a: 1. });
+        assert_eq!(Color::TRANSPARENT, Color{ r: 0., g: 0., b: 0., a: 0. });
+    }
+
+    #[test]
+    fn test_color_from() {
+        assert_eq!(Color::from([1., 0., 0.]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [f32;3] to Color.");
+        assert_eq!(Color::from([1., 0., 0., 1.]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [f32;4] to Color.");
+
+        assert_eq!(Color::from((1., 0., 0.)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (f32, f32, f32) to Color.");
+        assert_eq!(Color::from((1., 0., 0., 1.)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (f32, f32, f32, f32) to Color.");
+    }
+
+    #[test]
     fn test_renderer() {
         async fn run() {
             let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
             let window = Window::new(&event_loop).unwrap();
-
             let mut renderer = Renderer::new(&window).await;
-
-            event_loop.run(move |event, _, _| match event {
-                Event::RedrawRequested(_) => {
-                    renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], [1.0, 0.0, 0.0]);
-        
-                    renderer.render();
-                }
-                _ => {}
+            event_loop.run(move |_, _, _| {
+                renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], [1.0, 0.0, 0.0]);
+                renderer.render().unwrap();
             });
         }
 
