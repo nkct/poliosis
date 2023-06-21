@@ -33,6 +33,46 @@ impl From<(f32, f32, f32, f32)> for Color {
         return Color{ r: tup.0, g: tup.1, b: tup.2, a: tup.3};
     }
 }
+impl From<[u8;3]> for Color {
+    fn from(arr: [u8;3]) -> Self {
+        return Color{ 
+            r: arr[0] as f32 / 255., 
+            g: arr[1] as f32 / 255., 
+            b: arr[2] as f32 / 255., 
+            a: 1. 
+        };
+    }
+}
+impl From<(u8, u8, u8)> for Color {
+    fn from(tup: (u8, u8, u8)) -> Self {
+        return Color{ 
+            r: tup.0 as f32 / 255., 
+            g: tup.1 as f32 / 255., 
+            b: tup.2 as f32 / 255., 
+            a: 1.
+        };
+    }
+}
+impl From<[u8;4]> for Color {
+    fn from(arr: [u8;4]) -> Self {
+        return Color{ 
+            r: arr[0] as f32 / 255., 
+            g: arr[1] as f32 / 255., 
+            b: arr[2] as f32 / 255., 
+            a: arr[3] as f32 / 100., 
+        };
+    }
+}
+impl From<(u8, u8, u8, u8)> for Color {
+    fn from(tup: (u8, u8, u8, u8)) -> Self {
+        return Color{ 
+            r: tup.0 as f32 / 255., 
+            g: tup.1 as f32 / 255., 
+            b: tup.2 as f32 / 255., 
+            a: tup.3 as f32 / 100.,
+        };
+    }
+}
 impl Color {
     const RED:         Self = Color{ r: 1., g: 0., b: 0., a: 1. };
     const GREEN:       Self = Color{ r: 0., g: 1., b: 0., a: 1. };
