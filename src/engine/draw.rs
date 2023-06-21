@@ -14,65 +14,106 @@ struct Color {
     a: f32,
 }
 impl From<[f32;3]> for Color {
-    fn from(arr: [f32;3]) -> Self {
-        return Color{ r: arr[0], g: arr[1], b: arr[2], a: 1. };
+    fn from(value: [f32;3]) -> Self {
+        return Color{ 
+            r: value[0], 
+            g: value[1], 
+            b: value[2], 
+            a: 1., 
+        };
     }
 }
 impl From<(f32, f32, f32)> for Color {
-    fn from(tup: (f32, f32, f32)) -> Self {
-        return Color{ r: tup.0, g: tup.1, b: tup.2, a: 1.};
+    fn from(value: (f32, f32, f32)) -> Self {
+        return Color{ 
+            r: value.0, 
+            g: value.1, 
+            b: value.2, 
+            a: 1.,
+        };
     }
 }
 impl From<[f32;4]> for Color {
-    fn from(arr: [f32;4]) -> Self {
-        return Color{ r: arr[0], g: arr[1], b: arr[2], a: arr[3] };
+    fn from(value: [f32;4]) -> Self {
+        return Color{ 
+            r: value[0], 
+            g: value[1], 
+            b: value[2], 
+            a: value[3], 
+        };
     }
 }
 impl From<(f32, f32, f32, f32)> for Color {
-    fn from(tup: (f32, f32, f32, f32)) -> Self {
-        return Color{ r: tup.0, g: tup.1, b: tup.2, a: tup.3};
+    fn from(value: (f32, f32, f32, f32)) -> Self {
+        return Color{ 
+            r: value.0, 
+            g: value.1, 
+            b: value.2, 
+            a: value.3,
+        };
     }
 }
 impl From<[u8;3]> for Color {
-    fn from(arr: [u8;3]) -> Self {
+    fn from(value: [u8;3]) -> Self {
         return Color{ 
-            r: arr[0] as f32 / 255., 
-            g: arr[1] as f32 / 255., 
-            b: arr[2] as f32 / 255., 
+            r: value[0] as f32 / 255., 
+            g: value[1] as f32 / 255., 
+            b: value[2] as f32 / 255., 
             a: 1. 
         };
     }
 }
 impl From<(u8, u8, u8)> for Color {
-    fn from(tup: (u8, u8, u8)) -> Self {
+    fn from(value: (u8, u8, u8)) -> Self {
         return Color{ 
-            r: tup.0 as f32 / 255., 
-            g: tup.1 as f32 / 255., 
-            b: tup.2 as f32 / 255., 
+            r: value.0 as f32 / 255., 
+            g: value.1 as f32 / 255., 
+            b: value.2 as f32 / 255., 
             a: 1.
         };
     }
 }
 impl From<[u8;4]> for Color {
-    fn from(arr: [u8;4]) -> Self {
+    fn from(value: [u8;4]) -> Self {
         return Color{ 
-            r: arr[0] as f32 / 255., 
-            g: arr[1] as f32 / 255., 
-            b: arr[2] as f32 / 255., 
-            a: arr[3] as f32 / 100., 
+            r: value[0] as f32 / 255., 
+            g: value[1] as f32 / 255., 
+            b: value[2] as f32 / 255., 
+            a: value[3] as f32 / 100., 
         };
     }
 }
 impl From<(u8, u8, u8, u8)> for Color {
-    fn from(tup: (u8, u8, u8, u8)) -> Self {
+    fn from(value: (u8, u8, u8, u8)) -> Self {
         return Color{ 
-            r: tup.0 as f32 / 255., 
-            g: tup.1 as f32 / 255., 
-            b: tup.2 as f32 / 255., 
-            a: tup.3 as f32 / 100.,
+            r: value.0 as f32 / 255., 
+            g: value.1 as f32 / 255., 
+            b: value.2 as f32 / 255., 
+            a: value.3 as f32 / 100.,
         };
     }
 }
+
+impl From<Color> for [f32;3] {
+    fn from(value: Color) -> Self {
+        [
+            value.r, 
+            value.g, 
+            value.b, 
+        ]
+    }
+}
+impl From<Color> for [f32;4] {
+    fn from(value: Color) -> Self {
+        [
+            value.r, 
+            value.g, 
+            value.b,
+            value.a,  
+        ]
+    }
+}
+
 impl Color {
     const RED:         Self = Color{ r: 1., g: 0., b: 0., a: 1. };
     const GREEN:       Self = Color{ r: 0., g: 1., b: 0., a: 1. };
@@ -110,7 +151,10 @@ struct Renderer {
     indices: Vec<u16>,
 }
 impl Renderer {
-    fn draw_triangle(&mut self, points: [[f32;2];3], color: [f32;3]) {
+    fn draw_triangle<C: Into<Color>>(&mut self, points: [[f32;2];3], color: C) {
+        let color: Color = color.into();
+        let color: [f32;3] = color.into();
+
         self.vertices.push(Vertex::new([points[0][0], points[0][1], 0.0], color));
         self.vertices.push(Vertex::new([points[1][0], points[1][1], 0.0], color));
         self.vertices.push(Vertex::new([points[2][0], points[2][1], 0.0], color));
@@ -319,12 +363,19 @@ mod tests {
     }
 
     #[test]
-    fn test_color_from() {
+    fn test_color_convert() {
         assert_eq!(Color::from([1., 0., 0.]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [f32;3] to Color.");
         assert_eq!(Color::from([1., 0., 0., 1.]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [f32;4] to Color.");
 
         assert_eq!(Color::from((1., 0., 0.)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (f32, f32, f32) to Color.");
         assert_eq!(Color::from((1., 0., 0., 1.)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (f32, f32, f32, f32) to Color.");
+    
+        assert_eq!(Color::from([255, 0, 0]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [u8;3] to Color.");
+        assert_eq!(Color::from([255, 0, 0, 100]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [u8;4] to Color.");
+
+        assert_eq!(Color::from((255, 0, 0)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (u8, u8, u8) to Color.");
+        assert_eq!(Color::from((255, 0, 0, 100)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (u8, u8, u8, u8) to Color.");
+    
     }
 
     #[test]
