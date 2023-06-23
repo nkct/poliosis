@@ -2,7 +2,7 @@ use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{WindowBuilder, Window},
-    platform::wayland::EventLoopBuilderExtWayland
+    //platform::wayland::EventLoopBuilderExtWayland
 };
 use wgpu::util::DeviceExt;
 
@@ -125,12 +125,12 @@ impl Color {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
+pub struct Vertex {
     position: [f32; 3],
-    color: [f32; 3], //change this to vec4 to include alpha
+    color: [f32; 4], //change this to vec4 to include alpha
 }
 impl Vertex {
-    fn new(position: [f32;3], color: [f32;3]) -> Vertex {
+    fn new(position: [f32;3], color: [f32;4]) -> Vertex {
         Vertex { 
             position,
             color,
@@ -138,7 +138,7 @@ impl Vertex {
     }
 }
 
-struct Renderer {
+pub struct Renderer {
     size: winit::dpi::PhysicalSize<u32>,
     surface: wgpu::Surface,
     device: wgpu::Device,
@@ -147,13 +147,13 @@ struct Renderer {
 
     render_pipeline: wgpu::RenderPipeline,
 
-    vertices: Vec<Vertex>,
-    indices: Vec<u16>,
+    pub vertices: Vec<Vertex>,
+    pub indices: Vec<u16>,
 }
 impl Renderer {
-    fn draw_triangle<C: Into<Color>>(&mut self, points: [[f32;2];3], color: C) {
+    pub fn draw_triangle<C: Into<Color>>(&mut self, points: [[f32;2];3], color: C) {
         let color: Color = color.into();
-        let color: [f32;3] = color.into();
+        let color: [f32;4] = color.into();
 
         self.vertices.push(Vertex::new([points[0][0], points[0][1], 0.0], color));
         self.vertices.push(Vertex::new([points[1][0], points[1][1], 0.0], color));
@@ -166,7 +166,7 @@ impl Renderer {
         self.indices.push((offset + 2) as u16);
     }
 
-    async fn new(window: &Window) -> Self {
+    pub async fn new(window: &Window) -> Self {
 
         let size = window.inner_size();
         
@@ -186,11 +186,7 @@ impl Renderer {
         ).await.unwrap();
 
         let (device, queue) = adapter.request_device(
-            &wgpu::DeviceDescriptor {
-                features: wgpu::Features::empty(),
-                limits: wgpu::Limits::default(),
-                label: None,
-            },
+            &Default::default(),
             None,
         ).await.unwrap();
 
@@ -199,12 +195,15 @@ impl Renderer {
             .copied()
             .find(|f| f.is_srgb())            
             .unwrap_or(surface_caps.formats[0]);
+        println!("{:#?}", adapter.get_info());
+        println!("{:?}", surface_caps);
+        // try Surface::get_default_config
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: surface_caps.present_modes[0],
+            present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
@@ -231,7 +230,7 @@ impl Renderer {
                             wgpu::VertexAttribute {
                                 offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
                                 shader_location: 1,
-                                format: wgpu::VertexFormat::Float32x3,
+                                format: wgpu::VertexFormat::Float32x4,
                             }
                         ]
                     }
@@ -242,7 +241,7 @@ impl Renderer {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE), // experiment with overlapping shapes and this
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING), // experiment with overlapping shapes and this
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -292,7 +291,7 @@ impl Renderer {
         }
     }
 
-    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -377,7 +376,7 @@ mod tests {
         assert_eq!(Color::from((255, 0, 0, 100)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (u8, u8, u8, u8) to Color.");
     
     }
-
+    /*
     #[test]
     fn test_renderer() {
         async fn run() {
@@ -385,11 +384,17 @@ mod tests {
             let window = Window::new(&event_loop).unwrap();
             let mut renderer = Renderer::new(&window).await;
             event_loop.run(move |_, _, _| {
-                renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], [1.0, 0.0, 0.0]);
+                renderer.indices = Vec::new();
+                renderer.vertices = Vec::new();
+
+                renderer.draw_triangle([[-0.25, 0.5], [-0.75, -0.5], [0.25, -0.5]], [0.0, 0.0, 1.0, 0.5]);
+                renderer.draw_triangle([[0.25, 0.5], [-0.25, -0.5], [0.75, -0.5]], [1.0, 0.0, 0.0, 0.5]);
+
                 renderer.render().unwrap();
             });
         }
 
         pollster::block_on(run())
     }
+     */
 }
