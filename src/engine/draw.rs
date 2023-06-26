@@ -409,12 +409,7 @@ impl Renderer {
                 view: &view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 0.0,
-                        a: 1.0,
-                    }),
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                     store: true,
                 },
             })],
@@ -428,7 +423,7 @@ impl Renderer {
 
         drop(render_pass);
     
-        self.queue.submit(std::iter::once(encoder.finish()));
+        self.queue.submit(Some(encoder.finish()));
         output.present();
     
         Ok(())
@@ -452,19 +447,40 @@ mod tests {
 
     #[test]
     fn test_color_convert() {
-        assert_eq!(Color::from([1., 0., 0.]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [f32;3] to Color.");
-        assert_eq!(Color::from([1., 0., 0., 1.]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [f32;4] to Color.");
+        assert_eq!(Color::from([1., 0., 0.]), Color{ r: 1., g: 0., b: 0., a: 1. },      "ERROR: Failed assertion while converting from [f32;3] to Color.");
+        assert_eq!(Color::from([1., 0., 0., 1.]), Color{ r: 1., g: 0., b: 0., a: 1. },  "ERROR: Failed assertion while converting from [f32;4] to Color.");
 
-        assert_eq!(Color::from((1., 0., 0.)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (f32, f32, f32) to Color.");
-        assert_eq!(Color::from((1., 0., 0., 1.)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (f32, f32, f32, f32) to Color.");
+        assert_eq!(Color::from((1., 0., 0.)), Color{ r: 1., g: 0., b: 0., a: 1. },      "ERROR: Failed assertion while converting from (f32, f32, f32) to Color.");
+        assert_eq!(Color::from((1., 0., 0., 1.)), Color{ r: 1., g: 0., b: 0., a: 1. },  "ERROR: Failed assertion while converting from (f32, f32, f32, f32) to Color.");
     
-        assert_eq!(Color::from([255, 0, 0]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [u8;3] to Color.");
-        assert_eq!(Color::from([255, 0, 0, 100]), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from [u8;4] to Color.");
+        assert_eq!(Color::from([255, 0, 0]), Color{ r: 1., g: 0., b: 0., a: 1. },       "ERROR: Failed assertion while converting from [u8;3] to Color.");
+        assert_eq!(Color::from([255, 0, 0, 100]), Color{ r: 1., g: 0., b: 0., a: 1. },  "ERROR: Failed assertion while converting from [u8;4] to Color.");
 
-        assert_eq!(Color::from((255, 0, 0)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (u8, u8, u8) to Color.");
-        assert_eq!(Color::from((255, 0, 0, 100)), Color{ r: 1., g: 0., b: 0., a: 1. }, "ERROR: Failed assertion while converting from (u8, u8, u8, u8) to Color.");
-    
+        assert_eq!(Color::from((255, 0, 0)), Color{ r: 1., g: 0., b: 0., a: 1. },       "ERROR: Failed assertion while converting from (u8, u8, u8) to Color.");
+        assert_eq!(Color::from((255, 0, 0, 100)), Color{ r: 1., g: 0., b: 0., a: 1. },  "ERROR: Failed assertion while converting from (u8, u8, u8, u8) to Color.");
     }
+
+    #[test]
+    fn test_color_with() {
+        assert_eq!(Color{ r: 0.5, g: 0., b: 0., a: 1. }, Color::RED.with_red(0.5),      "ERROR: Failed assertion while calling Color.with_red(f32).");
+        assert_eq!(Color{ r: 0., g: 0.5, b: 0., a: 1. }, Color::GREEN.with_green(0.5),  "ERROR: Failed assertion while calling Color.with_green(f32).");
+        assert_eq!(Color{ r: 0., g: 0., b: 0.5, a: 1. }, Color::BLUE.with_blue(0.5),    "ERROR: Failed assertion while calling Color.with_blue(f32).");
+        assert_eq!(Color{ r: 0., g: 0., b: 0., a: 0.5 }, Color::BLACK.with_alpha(0.5),  "ERROR: Failed assertion while calling Color.with_alpha(f32).");
+    }
+    
+    #[test]
+    fn test_color_ops() {
+        assert_eq!(Color{r: 1., g: 1., b: 0., a: 1.}, Color::RED + Color::GREEN, "ERROR: Failed assertion while adding Color and Color.");
+        assert_eq!(Color{r: 0., g: 1., b: 1., a: 1.}, Color::WHITE - Color::RED, "ERROR: Failed assertion while subtracting Color and Color.");
+        
+        assert_eq!(Color{r: 1., g: 0., b: 0., a: 1.}, Color::RED.add_with_alpha(Color::TRANSPARENT), "ERROR: Failed assertion while calling Color.add_with_alpha().");
+        assert_eq!(Color{r: 0., g: 1., b: 1., a: 0.}, Color::WHITE.sub_with_alpha(Color::RED), "ERROR: Failed assertion while calling Color.sub_with_alpha().");
+
+        assert_eq!(Color{r: 0.5, g: 0.5, b: 0.5, a: 1.}, Color::WHITE * 0.5, "ERROR: Failed assertion while multiplying Color and f32.");
+        assert_eq!(Color{r: 0., g: 0.5, b: 1., a: 1.}, Color::WHITE * [0., 0.5, 1.], "ERROR: Failed assertion while multiplying Color and [f32;3].");
+        assert_eq!(Color{r: 1., g: 0.5, b: 0., a: 0.5}, Color::WHITE * [1., 0.5, 0., 0.5], "ERROR: Failed assertion while multiplying Color and [f32;4].");
+    }
+
     /*
     #[test]
     fn test_renderer() {
