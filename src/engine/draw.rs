@@ -114,6 +114,81 @@ impl From<Color> for [f32;4] {
     }
 }
 
+impl std::ops::Add for Color {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Color { 
+            r: self.r + rhs.r, 
+            g: self.g + rhs.g, 
+            b: self.b + rhs.b, 
+            a: self.a, 
+        }
+    }
+}
+impl std::ops::Sub for Color {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Color { 
+            r: self.r - rhs.r, 
+            g: self.g - rhs.g, 
+            b: self.b - rhs.b, 
+            a: self.a, 
+        }
+    }
+}
+impl Color {
+    fn add_with_alpha(self, rhs: Self) -> Self {
+        Color { 
+            r: self.r + rhs.r, 
+            g: self.g + rhs.g, 
+            b: self.b + rhs.b, 
+            a: self.a + rhs.a, 
+        }
+    }
+    fn sub_with_alpha(self, rhs: Self) -> Self {
+        Color { 
+            r: self.r - rhs.r, 
+            g: self.g - rhs.g, 
+            b: self.b - rhs.b, 
+            a: self.a - rhs.a, 
+        }
+    }
+}
+
+impl std::ops::Mul<f32> for Color {
+    type Output = Self;
+    fn mul(self, rhs: f32) -> Self::Output {
+        Color { 
+            r: self.r * rhs, 
+            g: self.g * rhs, 
+            b: self.b * rhs, 
+            a: self.a, 
+        }
+    }
+}
+impl std::ops::Mul<[f32;3]> for Color {
+    type Output = Self;
+    fn mul(self, rhs: [f32;3]) -> Self::Output {
+        Color { 
+            r: self.r * rhs[0], 
+            g: self.g * rhs[1], 
+            b: self.b * rhs[2], 
+            a: self.a, 
+        }
+    }
+}
+impl std::ops::Mul<[f32;4]> for Color {
+    type Output = Self;
+    fn mul(self, rhs: [f32;4]) -> Self::Output {
+        Color { 
+            r: self.r * rhs[0], 
+            g: self.g * rhs[1], 
+            b: self.b * rhs[2], 
+            a: self.a * rhs[3], 
+        }
+    }
+}
+
 impl Color {
     const RED:         Self = Color{ r: 1., g: 0., b: 0., a: 1. };
     const GREEN:       Self = Color{ r: 0., g: 1., b: 0., a: 1. };
@@ -121,6 +196,20 @@ impl Color {
     const BLACK:       Self = Color{ r: 0., g: 0., b: 0., a: 1. };
     const WHITE:       Self = Color{ r: 1., g: 1., b: 1., a: 1. };
     const TRANSPARENT: Self = Color{ r: 0., g: 0., b: 0., a: 0. };
+}
+impl Color {
+    fn with_red(&self, red: f32) -> Self {
+        Color { r: red, g: self.g, b: self.b, a: self.a }
+    }
+    fn with_green(&self, green: f32) -> Self {
+        Color { r: self.r, g: green, b: self.b, a: self.a }
+    }
+    fn with_blue(&self, blue: f32) -> Self {
+        Color { r: self.r, g: self.g, b: blue, a: self.a }
+    }
+    fn with_alpha(&self, alpha: f32) -> Self {
+        Color { r: self.r, g: self.g, b: self.b, a: alpha }
+    }
 }
 
 #[repr(C)]
