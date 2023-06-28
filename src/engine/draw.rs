@@ -2,7 +2,7 @@ use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{WindowBuilder, Window},
-    //platform::wayland::EventLoopBuilderExtWayland
+    platform::wayland::EventLoopBuilderExtWayland
 };
 use wgpu::util::DeviceExt;
 
@@ -284,8 +284,6 @@ impl Renderer {
             .copied()
             .find(|f| f.is_srgb())            
             .unwrap_or(surface_caps.formats[0]);
-        println!("{:#?}", adapter.get_info());
-        println!("{:?}", surface_caps);
         // try Surface::get_default_config
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -306,24 +304,11 @@ impl Renderer {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &[
-                            wgpu::VertexAttribute {
-                                offset: 0,
-                                shader_location: 0,
-                                format: wgpu::VertexFormat::Float32x3,
-                            },
-                            wgpu::VertexAttribute {
-                                offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                                shader_location: 1,
-                                format: wgpu::VertexFormat::Float32x4,
-                            }
-                        ]
-                    }
-                ],
+                buffers: &[wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x4],
+                }],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -481,7 +466,6 @@ mod tests {
         assert_eq!(Color{r: 1., g: 0.5, b: 0., a: 0.5}, Color::WHITE * [1., 0.5, 0., 0.5], "ERROR: Failed assertion while multiplying Color and [f32;4].");
     }
 
-    /*
     #[test]
     fn test_renderer() {
         async fn run() {
@@ -492,8 +476,8 @@ mod tests {
                 renderer.indices = Vec::new();
                 renderer.vertices = Vec::new();
 
-                renderer.draw_triangle([[-0.25, 0.5], [-0.75, -0.5], [0.25, -0.5]], [0.0, 0.0, 1.0, 0.5]);
-                renderer.draw_triangle([[0.25, 0.5], [-0.25, -0.5], [0.75, -0.5]], [1.0, 0.0, 0.0, 0.5]);
+                renderer.draw_triangle([[0.25, 0.5], [-0.25, -0.5], [0.75, -0.5]], Color::BLUE);
+                renderer.draw_triangle([[-0.25, 0.5], [-0.75, -0.5], [0.25, -0.5]], Color::RED.with_alpha(0.5));
 
                 renderer.render().unwrap();
             });
@@ -501,5 +485,4 @@ mod tests {
 
         pollster::block_on(run())
     }
-     */
 }
