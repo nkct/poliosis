@@ -2,7 +2,6 @@ use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{WindowBuilder, Window},
-    platform::wayland::EventLoopBuilderExtWayland
 };
 use wgpu::util::DeviceExt;
 
@@ -420,6 +419,7 @@ impl Renderer {
 mod tests {
     use super::*;    
 
+    // ----- COLOR TESTS -----
     #[test]
     fn test_color_consts() {
         assert_eq!(Color::RED,         Color{ r: 1., g: 0., b: 0., a: 1. });
@@ -429,7 +429,6 @@ mod tests {
         assert_eq!(Color::WHITE,       Color{ r: 1., g: 1., b: 1., a: 1. });
         assert_eq!(Color::TRANSPARENT, Color{ r: 0., g: 0., b: 0., a: 0. });
     }
-
     #[test]
     fn test_color_convert() {
         assert_eq!(Color::from([1., 0., 0.]), Color{ r: 1., g: 0., b: 0., a: 1. },      "ERROR: Failed assertion while converting from [f32;3] to Color.");
@@ -444,7 +443,6 @@ mod tests {
         assert_eq!(Color::from((255, 0, 0)), Color{ r: 1., g: 0., b: 0., a: 1. },       "ERROR: Failed assertion while converting from (u8, u8, u8) to Color.");
         assert_eq!(Color::from((255, 0, 0, 100)), Color{ r: 1., g: 0., b: 0., a: 1. },  "ERROR: Failed assertion while converting from (u8, u8, u8, u8) to Color.");
     }
-
     #[test]
     fn test_color_with() {
         assert_eq!(Color{ r: 0.5, g: 0., b: 0., a: 1. }, Color::RED.with_red(0.5),      "ERROR: Failed assertion while calling Color.with_red(f32).");
@@ -452,7 +450,6 @@ mod tests {
         assert_eq!(Color{ r: 0., g: 0., b: 0.5, a: 1. }, Color::BLUE.with_blue(0.5),    "ERROR: Failed assertion while calling Color.with_blue(f32).");
         assert_eq!(Color{ r: 0., g: 0., b: 0., a: 0.5 }, Color::BLACK.with_alpha(0.5),  "ERROR: Failed assertion while calling Color.with_alpha(f32).");
     }
-    
     #[test]
     fn test_color_ops() {
         assert_eq!(Color{r: 1., g: 1., b: 0., a: 1.}, Color::RED + Color::GREEN, "ERROR: Failed assertion while adding Color and Color.");
@@ -466,16 +463,50 @@ mod tests {
         assert_eq!(Color{r: 1., g: 0.5, b: 0., a: 0.5}, Color::WHITE * [1., 0.5, 0., 0.5], "ERROR: Failed assertion while multiplying Color and [f32;4].");
     }
 
+    // ----- RENDERER TESTS -----
+    // creating a winit EventLoop in non main thread requires this import and to configure it with .with_any_thread(true)
+    use winit::platform::wayland::EventLoopBuilderExtWayland;
+
     #[test]
+    #[ignore = "requires manual validation, run separetely"]
     fn test_renderer() {
         async fn run() {
             let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
             let window = Window::new(&event_loop).unwrap();
             let mut renderer = Renderer::new(&window).await;
             event_loop.run(move |_, _, _| {
-                renderer.indices = Vec::new();
-                renderer.vertices = Vec::new();
+                renderer.render().unwrap();
+            });
+        }
 
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_draw_triangle() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], Color::RED);
+
+                renderer.render().unwrap();
+            });
+        }
+
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_alpha() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
                 renderer.draw_triangle([[0.25, 0.5], [-0.25, -0.5], [0.75, -0.5]], Color::BLUE);
                 renderer.draw_triangle([[-0.25, 0.5], [-0.75, -0.5], [0.25, -0.5]], Color::RED.with_alpha(0.5));
 
