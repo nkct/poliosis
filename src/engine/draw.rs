@@ -6,7 +6,7 @@ use winit::{
 use wgpu::util::DeviceExt;
 
 #[derive( Debug, PartialEq )]
-struct Color {
+pub struct Color {
     r: f32,
     g: f32,
     b: f32,
@@ -211,11 +211,35 @@ impl Color {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Point {
+    x: f32,
+    y: f32
+}
+impl From<[f32;2]> for Point {
+    fn from(value: [f32;2]) -> Self {
+        return Point{ 
+            x: value[0],
+            y: value[1],
+        };
+    }
+}
+impl From<Point> for [f32;3] {
+    fn from(value: Point) -> Self {
+        return [ 
+            value.x,
+            value.y,
+            0.
+        ];
+    }
+}
+
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     position: [f32; 3],
-    color: [f32; 4], //change this to vec4 to include alpha
+    color: [f32; 4],
 }
 impl Vertex {
     fn new(position: [f32;3], color: [f32;4]) -> Vertex {
@@ -239,13 +263,15 @@ pub struct Renderer {
     pub indices: Vec<u16>,
 }
 impl Renderer {
-    pub fn draw_triangle<C: Into<Color>>(&mut self, points: [[f32;2];3], color: C) {
+    pub fn draw_triangle<C: Into<Color>, P: Into<Point>>(&mut self, points: [P;3], color: C) {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
 
-        self.vertices.push(Vertex::new([points[0][0], points[0][1], 0.0], color));
-        self.vertices.push(Vertex::new([points[1][0], points[1][1], 0.0], color));
-        self.vertices.push(Vertex::new([points[2][0], points[2][1], 0.0], color));
+        let points: [Point;3] = points.map(|p| p.into());
+
+        self.vertices.push(Vertex::new(points[0].into(), color));
+        self.vertices.push(Vertex::new(points[1].into(), color));
+        self.vertices.push(Vertex::new(points[2].into(), color));
 
         let offset = self.indices.len();
 
@@ -461,6 +487,14 @@ mod tests {
         assert_eq!(Color{r: 0.5, g: 0.5, b: 0.5, a: 1.}, Color::WHITE * 0.5, "ERROR: Failed assertion while multiplying Color and f32.");
         assert_eq!(Color{r: 0., g: 0.5, b: 1., a: 1.}, Color::WHITE * [0., 0.5, 1.], "ERROR: Failed assertion while multiplying Color and [f32;3].");
         assert_eq!(Color{r: 1., g: 0.5, b: 0., a: 0.5}, Color::WHITE * [1., 0.5, 0., 0.5], "ERROR: Failed assertion while multiplying Color and [f32;4].");
+    }
+
+    // ----- POINT TESTS -----
+    #[test]
+    fn test_point_convert() {
+        assert_eq!(Point::from([1., 0.]), Point{ x: 1., y: 0. }, "ERROR: Failed assertion while converting from [f32;2] to Point.");
+
+        assert_eq!(<[f32;3]>::from(Point{ x: 1., y: 0. }), [1., 0., 0.], "ERROR: Failed assertion while converting from Point to [f32;3].");
     }
 
     // ----- RENDERER TESTS -----
