@@ -266,7 +266,6 @@ impl Renderer {
     pub fn draw_triangle<C: Into<Color>, P: Into<Point>>(&mut self, points: [P;3], color: C) {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
-
         let points: [Point;3] = points.map(|p| p.into());
 
         self.vertices.push(Vertex::new(points[0].into(), color));
@@ -278,6 +277,27 @@ impl Renderer {
         self.indices.push((offset + 0) as u16);
         self.indices.push((offset + 1) as u16);
         self.indices.push((offset + 2) as u16);
+    }
+
+    pub fn draw_rect<C: Into<Color>, P: Into<Point>>(&mut self, points: [P;2], color: C) {
+        let color: Color = color.into();
+        let color: [f32;4] = color.into();
+        let points: [Point;2] = points.map(|p| p.into());
+
+        self.vertices.push(Vertex::new(points[0].into(), color));
+        self.vertices.push(Vertex::new([points[0].x, points[1].y, 0.], color));
+        self.vertices.push(Vertex::new([points[1].x, points[0].y, 0.], color));
+        self.vertices.push(Vertex::new(points[1].into(), color));
+
+        let offset = self.indices.len();
+
+        self.indices.push((offset + 0) as u16);
+        self.indices.push((offset + 1) as u16);
+        self.indices.push((offset + 2) as u16);
+
+        self.indices.push((offset + 2) as u16);
+        self.indices.push((offset + 1) as u16);
+        self.indices.push((offset + 3) as u16);
     }
 
     pub async fn new(window: &Window) -> Self {
@@ -543,6 +563,23 @@ mod tests {
             event_loop.run(move |_, _, _| {
                 renderer.draw_triangle([[0.25, 0.5], [-0.25, -0.5], [0.75, -0.5]], Color::BLUE);
                 renderer.draw_triangle([[-0.25, 0.5], [-0.75, -0.5], [0.25, -0.5]], Color::RED.with_alpha(0.5));
+
+                renderer.render().unwrap();
+            });
+        }
+
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_draw_rect() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_rect([[-0.5, 0.5], [0.5, -0.5]], Color::RED);
 
                 renderer.render().unwrap();
             });
