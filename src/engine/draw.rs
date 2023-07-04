@@ -300,6 +300,19 @@ impl Renderer {
         self.indices.push((offset + 3) as u16);
     }
 
+    pub fn draw_poly<C: Into<Color>, P: Into<Point>>(&mut self, points: Vec<P>, color: C) {
+        let color: Color = color.into();
+        let color: [f32;4] = color.into();
+        let points: Vec<Point> = points.into_iter().map(|p| p.into()).collect();
+        let mut offset = self.indices.len();
+
+        for point in points {
+            self.vertices.push(Vertex::new(point.into(), color));
+            self.indices.push((offset) as u16);
+            offset += 1;
+        }
+    }
+
     pub async fn new(window: &Window) -> Self {
 
         let size = window.inner_size();
@@ -580,6 +593,23 @@ mod tests {
             let mut renderer = Renderer::new(&window).await;
             event_loop.run(move |_, _, _| {
                 renderer.draw_rect([[-0.5, 0.5], [0.5, -0.5]], Color::RED);
+
+                renderer.render().unwrap();
+            });
+        }
+
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_draw_poly() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_poly([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5], [0.25, -0.25]].into(), Color::RED);
 
                 renderer.render().unwrap();
             });
