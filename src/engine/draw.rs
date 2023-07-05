@@ -234,6 +234,39 @@ impl From<Point> for [f32;3] {
     }
 }
 
+impl std::ops::Add for Point {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Point{
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+impl std::ops::Sub for Point {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Point{
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+impl Point {
+    pub fn add_f32(self, rhs: f32) -> Self {
+        Point { 
+            x: self.x + rhs, 
+            y: self.x + rhs, 
+        }
+    }
+    pub fn sub_f32(self, rhs: f32) -> Self {
+        Point { 
+            x: self.x - rhs, 
+            y: self.x - rhs, 
+        }
+    }
+}
+
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -537,6 +570,14 @@ mod tests {
         assert_eq!(Point::from([1., 0.]), Point{ x: 1., y: 0. }, "ERROR: Failed assertion while converting from [f32;2] to Point.");
 
         assert_eq!(<[f32;3]>::from(Point{ x: 1., y: 0. }), [1., 0., 0.], "ERROR: Failed assertion while converting from Point to [f32;3].");
+    }
+    #[test]
+    fn test_point_ops() {
+        assert_eq!(Point{ x:1.0, y:1.0}, Point{x:0.25, y:0.25} + Point{x:0.75, y:0.75}, "ERROR: Failed assertion while adding Points.");
+        assert_eq!(Point{ x:0.5, y:0.5}, Point{x:0.75, y:0.75} - Point{x:0.25, y:0.25}, "ERROR: Failed assertion while subtracting Points.");
+
+        assert_eq!(Point{ x:1.0, y:1.0}, Point{x:0.25, y:0.25}.add_f32(0.75), "ERROR: Failed assertion while adding Point and f32.");
+        assert_eq!(Point{ x:0.5, y:0.5}, Point{x:0.75, y:0.75}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
     }
 
     // ----- RENDERER TESTS -----
