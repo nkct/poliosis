@@ -304,12 +304,18 @@ impl Renderer {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let points: Vec<Point> = points.into_iter().map(|p| p.into()).collect();
-        let mut offset = self.indices.len();
+        let offset = self.indices.len() as u16;
+
+        // add indices first because it is non-consuming
+        for i in 0..(points.len() - 2) as u16 {
+            self.indices.push(offset + 0);
+            self.indices.push(offset + i + 1);
+            self.indices.push(offset + i + 2);
+        }
+
 
         for point in points {
             self.vertices.push(Vertex::new(point.into(), color));
-            self.indices.push((offset) as u16);
-            offset += 1;
         }
     }
 
@@ -468,6 +474,9 @@ impl Renderer {
     
         self.queue.submit(Some(encoder.finish()));
         output.present();
+
+        self.vertices = Vec::new();
+        self.indices = Vec::new();
     
         Ok(())
     }
@@ -609,7 +618,7 @@ mod tests {
             let window = Window::new(&event_loop).unwrap();
             let mut renderer = Renderer::new(&window).await;
             event_loop.run(move |_, _, _| {
-                renderer.draw_poly([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5], [0.25, -0.25]].into(), Color::RED);
+                renderer.draw_poly([[0.0, 0.9], [-0.75, 0.5], [-0.5, -0.75], [0.5, -0.75], [0.75, 0.5]].into(), Color::RED);
 
                 renderer.render().unwrap();
             });
