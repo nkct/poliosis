@@ -256,13 +256,13 @@ impl Point {
     pub fn add_f32(self, rhs: f32) -> Self {
         Point { 
             x: self.x + rhs, 
-            y: self.x + rhs, 
+            y: self.y + rhs, 
         }
     }
     pub fn sub_f32(self, rhs: f32) -> Self {
         Point { 
             x: self.x - rhs, 
-            y: self.x - rhs, 
+            y: self.y - rhs, 
         }
     }
 }
@@ -350,6 +350,34 @@ impl Renderer {
         for point in points {
             self.vertices.push(Vertex::new(point.into(), color));
         }
+    }
+
+    pub fn draw_line<C: Into<Color>, P: Into<Point>>(&mut self, points: [P;2], thickness: f32, color: C) {
+        let color: Color = color.into();
+        let color: [f32;4] = color.into();
+        let points: [Point;2] = points.map(|p| p.into());
+
+        let delta_x = points[0].x - points[1].x;
+        let delta_y = points[0].y - points[1].y;
+
+        // length of the hypotenuse
+        let l = ((delta_x).powi(2) + (delta_y).powi(2)).sqrt();
+
+        let x = (((delta_y * 2.) / l)).sin();
+        let y = (((delta_x * 2.) / l) * -1.).sin();
+
+        let thickness = thickness/2.;
+        let p = Point{ x: (thickness * x), y: (thickness * y)};
+
+        self.draw_poly([
+            points[0] + p,
+            points[0] - p,
+
+            points[1] - p,
+            points[1] + p,
+        ].into(), color);
+
+
     }
 
     pub async fn new(window: &Window) -> Self {
@@ -573,11 +601,11 @@ mod tests {
     }
     #[test]
     fn test_point_ops() {
-        assert_eq!(Point{ x:1.0, y:1.0}, Point{x:0.25, y:0.25} + Point{x:0.75, y:0.75}, "ERROR: Failed assertion while adding Points.");
-        assert_eq!(Point{ x:0.5, y:0.5}, Point{x:0.75, y:0.75} - Point{x:0.25, y:0.25}, "ERROR: Failed assertion while subtracting Points.");
+        assert_eq!(Point{ x:1.0, y:1.0}, Point{x:0.25, y:0.75} + Point{x:0.75, y:0.25}, "ERROR: Failed assertion while adding Points.");
+        assert_eq!(Point{ x:0.5, y:0.5}, Point{x:0.75, y:1.0} - Point{x:0.25, y:0.5}, "ERROR: Failed assertion while subtracting Points.");
 
-        assert_eq!(Point{ x:1.0, y:1.0}, Point{x:0.25, y:0.25}.add_f32(0.75), "ERROR: Failed assertion while adding Point and f32.");
-        assert_eq!(Point{ x:0.5, y:0.5}, Point{x:0.75, y:0.75}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
+        assert_eq!(Point{ x:0.5, y:0.75}, Point{x:0.25, y:0.5}.add_f32(0.25), "ERROR: Failed assertion while adding Point and f32.");
+        assert_eq!(Point{ x:0.25, y:0.75}, Point{x:0.5, y:1.0}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
     }
 
     // ----- RENDERER TESTS -----
@@ -662,6 +690,40 @@ mod tests {
                 renderer.draw_poly([[0.0, 0.9], [-0.75, 0.5], [-0.5, -0.75], [0.5, -0.75], [0.75, 0.5]].into(), Color::RED);
 
                 renderer.render().unwrap();
+            });
+        }
+
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_draw_line() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+
+            let mut ox = 0.;
+            let mut oy = 0.;
+
+            event_loop.run(move |_, _, _| {
+                renderer.draw_line([[0.5 - ox, 0.5 - oy], [-0.5 + ox, -0.5 + oy]], 0.1, Color::RED);
+
+                renderer.render().unwrap();
+
+                // this animation allows for displaying that the line is drawn correctly for all 360 degrees of rotation
+                if oy < 1. {
+                    oy += 0.01;
+                } else {
+                    ox += 0.01;
+                    if ox > 1. {
+                        oy = 0.;
+                        ox = 0.
+                    }
+                }
+
+                std::thread::sleep(std::time::Duration::from_millis(50))
             });
         }
 
