@@ -376,8 +376,41 @@ impl Renderer {
             points[1] - p,
             points[1] + p,
         ].into(), color);
+    }
 
+    pub fn draw_box<C: Into<Color>, P: Into<Point>>(&mut self, corners: [P;2], thickness: f32, color: C) {
+        let color: Color = color.into();
+        let color: [f32;4] = color.into();
+        let corners: [Point;2] = corners.map(|p| p.into());
+        let offset = self.indices.len() as u16;
 
+        let vertices = vec![
+            corners[0],
+            Point::from([corners[0].x, corners[1].y]),
+            corners[1],
+            Point::from([corners[1].x, corners[0].y]),
+
+            corners[0] + Point{ x: thickness, y: thickness * -1. },
+            Point::from([corners[0].x, corners[1].y]).add_f32(thickness),
+            corners[1] + Point{ x: thickness * -1., y: thickness },
+            Point::from([corners[1].x, corners[0].y]).sub_f32(thickness),
+        ];
+        let mut vertices = vertices.into_iter().map(|p| Vertex::new(p.into(), color)).collect();
+        self.vertices.append(&mut vertices);
+
+        let indices = vec![
+            0, 1, 4,
+            1, 2, 5,
+            2, 3, 6,
+            3, 0, 7,
+
+            4, 1, 5,
+            5, 2, 6,
+            6, 3, 7,
+            7, 0, 4,
+        ];
+        let mut indices = indices.into_iter().map(|i| i + offset).collect();
+        self.indices.append(&mut indices);
     }
 
     pub async fn new(window: &Window) -> Self {
@@ -724,6 +757,22 @@ mod tests {
                 }
 
                 std::thread::sleep(std::time::Duration::from_millis(50))
+            });
+        }
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_draw_box() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_box([[-0.5, 0.5], [0.5, -0.5]], 0.1, Color::RED);
+
+                renderer.render().unwrap();
             });
         }
 
