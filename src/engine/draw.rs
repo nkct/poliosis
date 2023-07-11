@@ -300,12 +300,11 @@ impl Renderer {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let points: [Point;3] = points.map(|p| p.into());
+        let offset = self.vertices.len();
 
         self.vertices.push(Vertex::new(points[0].into(), color));
         self.vertices.push(Vertex::new(points[1].into(), color));
         self.vertices.push(Vertex::new(points[2].into(), color));
-
-        let offset = self.indices.len();
 
         self.indices.push((offset + 0) as u16);
         self.indices.push((offset + 1) as u16);
@@ -316,13 +315,12 @@ impl Renderer {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let points: [Point;2] = points.map(|p| p.into());
+        let offset = self.vertices.len();
 
         self.vertices.push(Vertex::new(points[0].into(), color));
         self.vertices.push(Vertex::new([points[0].x, points[1].y, 0.], color));
         self.vertices.push(Vertex::new([points[1].x, points[0].y, 0.], color));
         self.vertices.push(Vertex::new(points[1].into(), color));
-
-        let offset = self.indices.len();
 
         self.indices.push((offset + 0) as u16);
         self.indices.push((offset + 1) as u16);
@@ -337,7 +335,7 @@ impl Renderer {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let points: Vec<Point> = points.into_iter().map(|p| p.into()).collect();
-        let offset = self.indices.len() as u16;
+        let offset = self.vertices.len() as u16;
 
         // add indices first because it is non-consuming
         for i in 0..(points.len() - 2) as u16 {
@@ -345,7 +343,6 @@ impl Renderer {
             self.indices.push(offset + i + 1);
             self.indices.push(offset + i + 2);
         }
-
 
         for point in points {
             self.vertices.push(Vertex::new(point.into(), color));
@@ -382,7 +379,7 @@ impl Renderer {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let corners: [Point;2] = corners.map(|p| p.into());
-        let offset = self.indices.len() as u16;
+        let offset = self.vertices.len() as u16;
 
         let vertices = vec![
             corners[0],
