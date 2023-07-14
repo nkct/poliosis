@@ -458,6 +458,75 @@ impl Renderer {
         }
     }
 
+    pub fn draw_crossed_box<C: Into<Color>, P: Into<Point>>(&mut self, corners: [P;2], thickness: f32, color: C, lines: u8) {
+        let color: Color = color.into();
+        let color: [f32;4] = color.into();
+        let corners: [Point;2] = corners.map(|p| p.into());
+        self.draw_box(corners, thickness, color);
+
+        let width = corners[1].x - corners[0].x;
+        let height = corners[0].y - corners[1].y;
+        let base_offset_x = (width * SQRT_2).powi(2) / (lines as f32 + 1.);
+        let base_offset_y = (height * SQRT_2).powi(2) / (lines as f32 + 1.);
+        let t = thickness / 2.;
+
+        let mut x = [0, 1];
+        let mut flip = 1.;
+
+        for i in 0..lines {
+            let p;
+            if i + 1 <= (lines / 2) {
+                let offset_x = base_offset_x * (i + 1) as f32;
+                let offset_y = base_offset_y * (i + 1) as f32;
+                p = [
+                    [corners[x[0]].x + t * flip, corners[0].y + t - offset_y], 
+                    [corners[x[0]].x - t * flip + offset_x * flip, corners[0].y - t]
+                ];
+            } else {
+                let offset_x = base_offset_x * (i + 1 - lines / 2) as f32;
+                let offset_y = base_offset_y * (i + 1 - lines / 2) as f32;
+                p = [
+                    [corners[x[1]].x + t * flip - offset_x * flip, corners[1].y + t], 
+                    [corners[x[1]].x - t * flip, corners[1].y - t + offset_y]
+                ];
+            }
+            self.draw_poly([
+                [p[0][0] + t, p[0][1]], 
+                [p[0][0] - t, p[0][1]], 
+                [p[1][0] - t, p[1][1]], 
+                [p[1][0] + t, p[1][1]], 
+            ].into(), color);
+        }
+
+        x = [1, 0];
+        flip *= -1.;
+
+        for i in 0..lines {
+            let p;
+            if i + 1 <= (lines / 2) {
+                let offset_x = base_offset_x * (i + 1) as f32;
+                let offset_y = base_offset_y * (i + 1) as f32;
+                p = [
+                    [corners[x[0]].x + t * flip, corners[0].y + t - offset_y], 
+                    [corners[x[0]].x - t * flip + offset_x * flip, corners[0].y - t]
+                ];
+            } else {
+                let offset_x = base_offset_x * (i + 1 - lines / 2) as f32;
+                let offset_y = base_offset_y * (i + 1 - lines / 2) as f32;
+                p = [
+                    [corners[x[1]].x + t * flip - offset_x * flip, corners[1].y + t], 
+                    [corners[x[1]].x - t * flip, corners[1].y - t + offset_y]
+                ];
+            }
+            self.draw_poly([
+                [p[0][0] + t, p[0][1]], 
+                [p[0][0] - t, p[0][1]], 
+                [p[1][0] - t, p[1][1]], 
+                [p[1][0] + t, p[1][1]], 
+            ].into(), color);
+        }
+    }
+
     pub async fn new(window: &Window) -> Self {
 
         let size = window.inner_size();
@@ -854,6 +923,32 @@ mod tests {
                     }
                 }
                  */
+
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                renderer.render().unwrap();
+            });
+        }
+
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_draw_crossed_box() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            let mut n = 0;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_crossed_box([[-0.5, 0.5], [0.5, -0.5]], 0.1, Color::RED, n);
+
+
+                if n < 5 {
+                    n += 1;
+                } else {
+                    n = 0;
+                }
 
                 std::thread::sleep(std::time::Duration::from_millis(500));
                 renderer.render().unwrap();
