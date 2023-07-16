@@ -770,7 +770,32 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
+        pollster::block_on(run())
+    }
 
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_resize() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |event, _, _| {
+                renderer.draw_triangle([[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]], Color::RED);
+                match event {
+                    Event::WindowEvent { event: WindowEvent::Resized(new_size), .. } => {
+                        renderer.resize(new_size);
+                    },
+                    Event::MainEventsCleared => {
+                        window.request_redraw();
+                    },
+                    Event::RedrawRequested(_) => {
+                        renderer.render().unwrap()
+                    },
+                    _ => {},
+                }
+            });
+        }
         pollster::block_on(run())
     }
 
@@ -787,7 +812,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 
@@ -805,7 +829,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 
@@ -822,7 +845,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 
@@ -839,7 +861,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 
@@ -869,7 +890,6 @@ mod tests {
                         ox = 0.
                     }
                 }
-
                 std::thread::sleep(std::time::Duration::from_millis(50))
             });
         }
@@ -889,7 +909,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 
@@ -928,7 +947,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 
@@ -943,7 +961,6 @@ mod tests {
             event_loop.run(move |_, _, _| {
                 renderer.draw_crossed_box([[-0.5, 0.5], [0.5, -0.5]], 0.1, Color::RED, n);
 
-
                 if n < 5 {
                     n += 1;
                 } else {
@@ -954,7 +971,6 @@ mod tests {
                 renderer.render().unwrap();
             });
         }
-
         pollster::block_on(run())
     }
 }
