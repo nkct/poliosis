@@ -6,6 +6,7 @@ use winit::{
     window::{WindowBuilder, Window},
 };
 use wgpu::util::DeviceExt;
+use wgpu_glyph::{ab_glyph, GlyphBrushBuilder, Section, Text};
 
 #[derive( Debug, PartialEq )]
 pub struct Color {
@@ -296,6 +297,9 @@ pub struct Renderer {
 
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
+
+    staging_belt: wgpu::util::StagingBelt,
+    glyph_brush: wgpu_glyph::GlyphBrush<()>,
 }
 impl Renderer {
     pub fn draw_triangle<C: Into<Color>, P: Into<Point>>(&mut self, points: [P;3], color: C) {
@@ -527,6 +531,23 @@ impl Renderer {
         }
     }
 
+    fn draw_text<C: Into<Color>, P: Into<Point>>(&mut self, position: P, text: &str, color: C, scale: f32) {
+        let color: Color = color.into();
+        let color: [f32;4] = color.into();
+        let position: Point = position.into();
+        
+        let width = self.size.width as f32;
+        let height = self.size.height as f32;
+
+        self.glyph_brush.queue(Section {
+            screen_position: ((width / 2.) + (position.x / 2.) * width + 1., (height / 2.) + ((position.y * -1.) / 2.) * height),
+            text: vec![Text::new(text)
+                .with_color(color)
+                .with_scale(ab_glyph::PxScale {x: (scale / 2.) * width, y: (scale / 2.) * height})],
+            ..Section::default()
+        });
+    }
+
     pub async fn new(window: &Window) -> Self {
 
         let size = window.inner_size();
@@ -613,6 +634,14 @@ impl Renderer {
 
         let indices = Vec::new();
 
+        let staging_belt = wgpu::util::StagingBelt::new(1024);
+
+        let inconsolata = ab_glyph::FontArc::try_from_slice(include_bytes!(
+            "../Inconsolata-Regular.ttf"
+        )).unwrap();
+    
+        let glyph_brush = GlyphBrushBuilder::using_font(inconsolata)
+            .build(&device, surface_format);
 
         Renderer {
             size,
@@ -625,6 +654,9 @@ impl Renderer {
 
             vertices,
             indices,
+
+            staging_belt,
+            glyph_brush,
         }
     }
 
@@ -679,6 +711,16 @@ impl Renderer {
         render_pass.draw_indexed(0..self.indices.len() as u32, 0, 0..1);
 
         drop(render_pass);
+
+        self.glyph_brush.draw_queued(
+            &self.device,
+            &mut self.staging_belt,
+            &mut encoder,
+            &view,
+            self.size.width,
+            self.size.height,
+        ).unwrap();
+        self.staging_belt.finish();
     
         self.queue.submit(Some(encoder.finish()));
         output.present();
@@ -968,6 +1010,21 @@ mod tests {
                 }
 
                 std::thread::sleep(std::time::Duration::from_millis(500));
+                renderer.render().unwrap();
+            });
+        }
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_text() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_text([0., 0.,], "Hello World!", Color::WHITE, 0.1);
                 renderer.render().unwrap();
             });
         }
