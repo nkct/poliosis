@@ -8,7 +8,7 @@ use winit::{
 use wgpu::util::DeviceExt;
 use wgpu_glyph::{ab_glyph, GlyphBrushBuilder, Section, Text};
 
-#[derive( Debug, PartialEq )]
+#[derive( Debug, PartialEq, Clone, Copy )]
 pub struct Color {
     r: f32,
     g: f32,
@@ -192,12 +192,12 @@ impl std::ops::Mul<[f32;4]> for Color {
 }
 
 impl Color {
-    const RED:         Self = Color{ r: 1., g: 0., b: 0., a: 1. };
-    const GREEN:       Self = Color{ r: 0., g: 1., b: 0., a: 1. };
-    const BLUE:        Self = Color{ r: 0., g: 0., b: 1., a: 1. };
-    const BLACK:       Self = Color{ r: 0., g: 0., b: 0., a: 1. };
-    const WHITE:       Self = Color{ r: 1., g: 1., b: 1., a: 1. };
-    const TRANSPARENT: Self = Color{ r: 0., g: 0., b: 0., a: 0. };
+    pub const RED:         Self = Color{ r: 1., g: 0., b: 0., a: 1. };
+    pub const GREEN:       Self = Color{ r: 0., g: 1., b: 0., a: 1. };
+    pub const BLUE:        Self = Color{ r: 0., g: 0., b: 1., a: 1. };
+    pub const BLACK:       Self = Color{ r: 0., g: 0., b: 0., a: 1. };
+    pub const WHITE:       Self = Color{ r: 1., g: 1., b: 1., a: 1. };
+    pub const TRANSPARENT: Self = Color{ r: 0., g: 0., b: 0., a: 0. };
 }
 impl Color {
     fn with_red(&self, red: f32) -> Self {
@@ -531,7 +531,7 @@ impl Renderer {
         }
     }
 
-    fn draw_text<C: Into<Color>, P: Into<Point>>(&mut self, position: P, text: &str, color: C, scale: f32) {
+    pub fn draw_text<C: Into<Color>, P: Into<Point>>(&mut self, position: P, text: &str, color: C, scale: f32) {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let position: Point = position.into();
