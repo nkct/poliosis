@@ -24,6 +24,56 @@ impl<'a> UIContext<'a> {
     }
 }
 
+struct MenuStyle {
+    frame_thickness: f32,
+    bg_color: Color,
+    frame_color: Color,
+    spacing: f32,
+}
+impl Default for MenuStyle {
+    fn default() -> Self {
+        MenuStyle {
+            frame_thickness: 0.01,
+            bg_color: Color::BLACK,
+            frame_color: Color::WHITE,
+            spacing: 0.005,
+        }
+    }
+}
+impl MenuStyle {
+    fn with_frame_thickness(&self, frame_thickness: f32) -> Self {
+        MenuStyle {
+            frame_thickness,
+            bg_color: self.bg_color,
+            frame_color: self.frame_color,
+            spacing: self.spacing,
+        }
+    }
+    fn with_bg_color(&self, bg_color: Color) -> Self {
+        MenuStyle {
+            frame_thickness: self.frame_thickness,
+            bg_color,
+            frame_color: self.frame_color,
+            spacing: self.spacing,
+        }
+    }
+    fn with_frame_color(&self, frame_color: Color) -> Self {
+        MenuStyle {
+            frame_thickness: self.frame_thickness,
+            bg_color: self.bg_color,
+            frame_color,
+            spacing: self.spacing,
+        }
+    }
+    fn with_spacing(&self, spacing: f32) -> Self {
+        MenuStyle {
+            frame_thickness: self.frame_thickness,
+            bg_color: self.bg_color,
+            frame_color: self.frame_color,
+            spacing,
+        }
+    }
+}
 struct Menu {
     wigets: Vec<Box<dyn Widget>>,
     corners: [Point;2],
@@ -33,7 +83,7 @@ struct Menu {
     spacing: f32,
 }
 impl Menu {
-    fn new(corners: [Point;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32,) -> Menu {
+    fn new(corners: [Point;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32,) -> Self {
         Menu {
             wigets: Vec::new(),
             corners,
@@ -41,6 +91,17 @@ impl Menu {
             bg_color,
             frame_color,
             spacing,
+        }
+    }
+
+    fn from_style(style: MenuStyle, corners: [Point;2]) -> Self {
+        Menu {
+            wigets: Vec::new(),
+            corners,
+            frame_thickness: style.frame_thickness,
+            bg_color: style.bg_color,
+            frame_color: style.frame_color,
+            spacing: style.spacing,
         }
     }
 
@@ -107,13 +168,10 @@ mod tests {
             event_loop.run(move |_, _, _| {
 
                 let mut ui = UIContext::new(&mut renderer);
-
-                let mut test_menu = Menu::new(
+                
+                let mut test_menu = Menu::from_style(
+                    MenuStyle::default(),
                     [[-0.5, 0.5].into(), [0.5, -0.5].into()],
-                    0.1,
-                    Color::BLACK,
-                    Color::WHITE,
-                    0.1
                 );
 
                 test_menu.add_widget(Box::new(Label::new("Hello World".to_string(), 0.1, Color::WHITE)));
