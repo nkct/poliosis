@@ -268,6 +268,12 @@ impl Point {
             y: self.y - rhs, 
         }
     }
+    pub fn add_x_sub_y(self, rhs: f32) -> Self {
+        Point { 
+            x: self.x + rhs, 
+            y: self.y - rhs,
+        }
+    }
 }
 
 
@@ -795,6 +801,8 @@ mod tests {
 
         assert_eq!(Point{ x:0.5, y:0.75}, Point{x:0.25, y:0.5}.add_f32(0.25), "ERROR: Failed assertion while adding Point and f32.");
         assert_eq!(Point{ x:0.25, y:0.75}, Point{x:0.5, y:1.0}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
+    
+        assert_eq!(Point{ x: 0., y: 0., } , Point{ x: -0.5, y: 0.5 }.add_x_sub_y(0.5), "ERROR: Failed assertion while calling add_x_sub_y on Point")
     }
 
     // ----- RENDERER TESTS -----
