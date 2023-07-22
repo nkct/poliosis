@@ -136,7 +136,7 @@ impl Menu {
     }
 
     fn add_widget(&mut self, widget: Box<dyn Widget>) {
-        let mut widget = widget
+        let mut widget = widget;
         widget.set_text_color_if_none(self.default_text_color);
         self.wigets.push(widget)
     }
