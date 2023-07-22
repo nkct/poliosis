@@ -29,6 +29,7 @@ struct MenuStyle {
     bg_color: Color,
     frame_color: Color,
     spacing: f32,
+    default_text_color: Color
 }
 impl Default for MenuStyle {
     fn default() -> Self {
@@ -37,6 +38,7 @@ impl Default for MenuStyle {
             bg_color: Color::BLACK,
             frame_color: Color::WHITE,
             spacing: 0.005,
+            default_text_color: Color::WHITE
         }
     }
 }
@@ -47,6 +49,7 @@ impl MenuStyle {
             bg_color: self.bg_color,
             frame_color: self.frame_color,
             spacing: self.spacing,
+            default_text_color: self.default_text_color,
         }
     }
     fn with_bg_color(&self, bg_color: Color) -> Self {
@@ -55,6 +58,7 @@ impl MenuStyle {
             bg_color,
             frame_color: self.frame_color,
             spacing: self.spacing,
+            default_text_color: self.default_text_color,
         }
     }
     fn with_frame_color(&self, frame_color: Color) -> Self {
@@ -63,6 +67,7 @@ impl MenuStyle {
             bg_color: self.bg_color,
             frame_color,
             spacing: self.spacing,
+            default_text_color: self.default_text_color,
         }
     }
     fn with_spacing(&self, spacing: f32) -> Self {
@@ -71,6 +76,16 @@ impl MenuStyle {
             bg_color: self.bg_color,
             frame_color: self.frame_color,
             spacing,
+            default_text_color: self.default_text_color,
+        }
+    }
+    fn with_default_text_color(&self, default_text_color: Color) -> Self {
+        MenuStyle {
+            frame_thickness: self.frame_thickness,
+            bg_color: self.bg_color,
+            frame_color: self.frame_color,
+            spacing: self.spacing,
+            default_text_color,
         }
     }
 }
@@ -81,9 +96,10 @@ struct Menu {
     bg_color: Color,
     frame_color: Color,
     spacing: f32,
+    default_text_color: Color
 }
 impl Menu {
-    fn new(corners: [Point;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32,) -> Self {
+    fn new(corners: [Point;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32, default_text_color: Color) -> Self {
         Menu {
             wigets: Vec::new(),
             corners,
@@ -91,6 +107,7 @@ impl Menu {
             bg_color,
             frame_color,
             spacing,
+            default_text_color,
         }
     }
 
@@ -102,6 +119,7 @@ impl Menu {
             bg_color: style.bg_color,
             frame_color: style.frame_color,
             spacing: style.spacing,
+            default_text_color: style.default_text_color,
         }
     }
 
@@ -118,6 +136,8 @@ impl Menu {
     }
 
     fn add_widget(&mut self, widget: Box<dyn Widget>) {
+        let mut widget = widget
+        widget.set_text_color_if_none(self.default_text_color);
         self.wigets.push(widget)
     }
 }
@@ -125,29 +145,40 @@ impl Menu {
 trait Widget {
     fn draw_widget(&self, renderer: &mut Renderer, position: Point);
     fn height(&self) -> f32;
+    fn set_text_color_if_none(&mut self, text_color: Color);
 }
 
 struct Label {
     text: String,
-    scale: f32,
-    color: Color,
+    font_size: f32,
+    text_color: Option<Color>,
 }
 impl Label {
-    fn new(text: String, scale: f32, color: Color) -> Label {
+    fn new(text: String, font_size: f32, text_color: Option<Color>) -> Label {
         Label {
             text,
-            scale,
-            color,
+            font_size,
+            text_color,
         }
     }
 }
 impl Widget for Label {
     fn height(&self) -> f32 {
-        self.scale
+        self.font_size
     }
 
     fn draw_widget(&self, renderer: &mut Renderer, position: Point) {
-        renderer.draw_text(position, &self.text, self.color, self.scale)
+        if let Some(text_color) = self.text_color {
+            renderer.draw_text(position, &self.text, text_color, self.font_size)
+        } else {
+            panic!("ERROR: attempted to draw UI widget without a text_color")
+        }
+    }
+
+    fn set_text_color_if_none(&mut self, text_color: Color) {
+        if self.text_color == None {
+            self.text_color = Some(text_color)
+        }
     }
 }
 
@@ -174,7 +205,7 @@ mod tests {
                     [[-0.5, 0.5].into(), [0.5, -0.5].into()],
                 );
 
-                test_menu.add_widget(Box::new(Label::new("Hello World".to_string(), 0.1, Color::WHITE)));
+                test_menu.add_widget(Box::new(Label::new("Hello World".to_string(), 0.1, None)));
 
                 ui.add_menu(test_menu);
                 ui.draw_menus();
