@@ -18,7 +18,7 @@ impl<'a> UIContext<'a> {
     }
 
     fn draw_menus(&mut self) {
-        for menu in &self.menus {
+        for menu in self.menus.iter_mut() {
             menu.draw_menu(self.renderer)
         }
     }
@@ -123,12 +123,12 @@ impl Menu {
         }
     }
 
-    fn draw_menu(&self, renderer: &mut Renderer) {
+    fn draw_menu(&mut self, renderer: &mut Renderer) {
         renderer.draw_rect(self.corners, self.bg_color);
         renderer.draw_box(self.corners, self.frame_thickness, self.frame_color);
 
         let mut widget_offset = self.corners[0] - [-1. * (self.frame_thickness + self.spacing), self.frame_thickness + self.spacing].into();
-        for (i, widget) in self.wigets.iter().enumerate() {
+        for (i, widget) in self.wigets.iter_mut().enumerate() {
             widget_offset = widget_offset - [0., self.spacing * i as f32].into();
             widget.draw_widget(renderer, widget_offset);
             widget_offset = widget_offset - [0., widget.height()].into();
@@ -143,7 +143,7 @@ impl Menu {
 }
 
 trait Widget {
-    fn draw_widget(&self, renderer: &mut Renderer, position: Point);
+    fn draw_widget(&mut self, renderer: &mut Renderer, position: Point);
     fn height(&self) -> f32;
     fn set_text_color_if_none(&mut self, text_color: Color);
 }
@@ -167,7 +167,7 @@ impl Widget for Label {
         self.font_size
     }
 
-    fn draw_widget(&self, renderer: &mut Renderer, position: Point) {
+    fn draw_widget(&mut self, renderer: &mut Renderer, position: Point) {
         if let Some(text_color) = self.text_color {
             renderer.draw_text(position, &self.text, text_color, self.font_size)
         } else {
@@ -175,6 +175,71 @@ impl Widget for Label {
         }
     }
 
+    fn set_text_color_if_none(&mut self, text_color: Color) {
+        if self.text_color == None {
+            self.text_color = Some(text_color)
+        }
+    }
+}
+
+struct Button {
+    text: String,
+    font_size: f32,
+    text_color: Option<Color>,
+    padding: f32,
+    frame_thickness: f32,
+    frame_color: Color,
+    bounds: Option<[Point;2]>,
+    callback: Box<dyn FnOnce() -> ()>,
+}
+impl Button {
+    fn new(
+        text: String,
+        font_size: f32,
+        text_color: Option<Color>,
+        padding: f32,
+        frame_thickness: f32,
+        frame_color: Color,
+        callback: Box<dyn FnOnce() -> ()>,
+    ) -> Self {
+        Button { 
+            text, 
+            font_size, 
+            text_color, 
+            padding, 
+            frame_thickness, 
+            frame_color, 
+            bounds: None,
+            callback, 
+        }
+    }
+    fn calculate_bounds(&mut self, position: Point) {
+        self.bounds = Some([
+            position - [0., self.frame_thickness + self.padding].into(),
+            [
+                position.x + self.text.len() as f32 * (self.font_size / 2.) as f32 + self.padding, 
+                position.y - self.height() - self.frame_thickness - self.padding,
+            ].into(),
+        ])
+    }
+}
+impl Widget for Button {
+    fn height(&self) -> f32 {
+        self.font_size
+    }
+    fn draw_widget(&mut self, renderer: &mut Renderer, position: Point) {
+        self.calculate_bounds(position);
+        if let Some(text_color) = self.text_color {
+            if let Some(bounds) = self.bounds {
+                renderer.draw_box(bounds, self.frame_thickness, self.frame_color);
+            } else {
+                panic!("ERROR attempted to draw UI Button without bounds")
+            }
+            renderer.draw_text(position.add_x_sub_y(self.frame_thickness + self.padding), &self.text, text_color, self.font_size)
+        } else {
+            panic!("ERROR: attempted to draw UI widget without a text_color")
+        }
+    }
     fn set_text_color_if_none(&mut self, text_color: Color) {
         if self.text_color == None {
             self.text_color = Some(text_color)
@@ -206,6 +271,15 @@ mod tests {
                 );
 
                 test_menu.add_widget(Box::new(Label::new("Hello World".to_string(), 0.1, None)));
+                test_menu.add_widget(Box::new(Button::new(
+                    "Hello World!".to_string(), 
+                    0.1, 
+                    None, 
+                    0.01, 
+                    0.01, 
+                    Color::BLUE, 
+                    Box::new(|| {}),
+                )));
 
                 ui.add_menu(test_menu);
                 ui.draw_menus();

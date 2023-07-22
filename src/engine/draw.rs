@@ -216,8 +216,8 @@ impl Color {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {
-    x: f32,
-    y: f32
+    pub x: f32,
+    pub y: f32
 }
 impl From<[f32;2]> for Point {
     fn from(value: [f32;2]) -> Self {
