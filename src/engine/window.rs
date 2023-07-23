@@ -61,6 +61,13 @@ impl WindowHandler {
                                 -1. * position.y / (self.renderer.size.height as f64 / 2.) + 1.,
                                 ].into();
                         },
+                        WindowEvent::MouseInput { state: key_state, button: event_button, .. } => {
+                            for (callback_button, (bounds, callback)) in self.input_handler.mouse_click_event_callbacks.iter() {
+                                if callback_button == &event_button && self.input_handler.cursor_position.within(*bounds) {
+                                    callback(key_state);
+                                }
+                            }
+                        }
                         WindowEvent::KeyboardInput { input: KeyboardInput{ state: key_state, virtual_keycode: Some(event_key), .. }, .. } => { 
                             for (callback_key, callback) in self.input_handler.key_event_callbacks.iter() {
                                 if callback_key == &event_key {
@@ -81,7 +88,7 @@ impl WindowHandler {
 }
 struct InputHandler {
     key_event_callbacks: HashMap<VirtualKeyCode, Box<dyn Fn(ElementState) -> ()>>,
-    mouse_click_event_callbacks: HashMap<MouseButton, Box<dyn Fn(ElementState) -> ()>>,
+    mouse_click_event_callbacks: HashMap<MouseButton, ([Point;2], Box<dyn Fn(ElementState) -> ()>)>,
     pub cursor_position: Point,
 }
 impl InputHandler {
@@ -95,8 +102,13 @@ impl InputHandler {
     fn add_key_event_callback<F: Fn(ElementState) -> () + 'static>(&mut self, key: VirtualKeyCode, callback: F) {
         self.key_event_callbacks.insert(key, Box::new(callback));
     }
-    fn add_mouse_click_event_callback<F: Fn(ElementState) -> () + 'static>(&mut self, key: MouseButton, bounds: [Point;2], callback: F) {
-        
+    fn add_mouse_click_event_callback<F: Fn(ElementState) -> () + 'static>(&mut self, button: MouseButton, bounds: Option<[Point;2]>, callback: F) {
+        if let Some(bounds) = bounds {
+            self.mouse_click_event_callbacks.insert(button, (bounds, Box::new(callback)));
+        } else {
+            let bounds = [[-1., 1.].into(), [1., -1.].into()];
+            self.mouse_click_event_callbacks.insert(button, (bounds, Box::new(callback)));
+        }
     }
 }
 
@@ -141,7 +153,7 @@ mod tests {
     }
 
     #[test]
-    fn test_windowhandler_inputhandler_cursor_position() {
+    fn test_inputhandler_cursor_position() {
         async fn run() {
             let window_handler = WindowHandler::from_builders(
                 WindowBuilder::default(),
@@ -149,6 +161,25 @@ mod tests {
             ).await;
             window_handler.main_loop(|renderer, input_handler| {
                 println!("{:?}", input_handler.cursor_position);
+                renderer.render().unwrap();
+            });
+        }
+        pollster::block_on(run())
+    }
+
+    #[test]
+    fn test_inputhandler_mouse_click() {
+        async fn run() {
+            let window_handler = WindowHandler::from_builders(
+                WindowBuilder::default(),
+                EventLoopBuilder::default().with_any_thread(true),
+            ).await;
+            window_handler.main_loop(|renderer, input_handler| {
+                input_handler.add_mouse_click_event_callback(MouseButton::Left, Some([[-0.5, 0.5].into(), [0.5, -0.5].into()]), |button_state| {
+                    if button_state == ElementState::Pressed {
+                        println!("pressed left click within bounds")
+                    }
+                });
                 renderer.render().unwrap();
             });
         }
