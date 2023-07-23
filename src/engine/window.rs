@@ -9,14 +9,14 @@ use crate::engine::draw::Renderer;
 
 use super::draw::Point;
 
-struct WindowHandler {
+pub struct WindowHandler {
     window: Window,
     event_loop: EventLoop<()>,
     renderer: Renderer,
     input_handler: InputHandler,
 }
 impl WindowHandler {
-    async fn new() -> Self {
+    pub async fn new() -> Self {
         let event_loop = EventLoop::new();
         let window = Window::new(&event_loop).unwrap();
         let renderer = Renderer::new(&window).await;
@@ -30,7 +30,7 @@ impl WindowHandler {
         }
     }
 
-    async fn from_builders(window_builder: WindowBuilder, event_loop_builder: &mut EventLoopBuilder<()>) -> Self {
+    pub async fn from_builders(window_builder: WindowBuilder, event_loop_builder: &mut EventLoopBuilder<()>) -> Self {
         let event_loop = event_loop_builder.build();
         let window = window_builder.build(&event_loop).unwrap();
         let renderer = Renderer::new(&window).await;
@@ -44,7 +44,7 @@ impl WindowHandler {
         }
     }
 
-    fn main_loop<F: FnMut(&mut Renderer, &mut InputHandler) -> () + 'static>(mut self, mut f: F) {   
+    pub fn main_loop<F: FnMut(&mut Renderer, &mut InputHandler) -> () + 'static>(mut self, mut f: F) {   
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::WindowEvent { event, .. } => {
@@ -86,28 +86,28 @@ impl WindowHandler {
         });
     }
 }
-struct InputHandler {
-    key_event_callbacks: HashMap<VirtualKeyCode, Box<dyn Fn(ElementState) -> ()>>,
-    mouse_click_event_callbacks: HashMap<MouseButton, ([Point;2], Box<dyn Fn(ElementState) -> ()>)>,
+pub struct InputHandler {
+    key_event_callbacks: HashMap<VirtualKeyCode, fn(ElementState) -> ()>,
+    mouse_click_event_callbacks: HashMap<MouseButton, ([Point;2], fn(ElementState) -> ())>,
     pub cursor_position: Point,
 }
 impl InputHandler {
-    fn new() -> Self {
+    pub fn new() -> Self {
         InputHandler { 
             key_event_callbacks: HashMap::new(), 
             mouse_click_event_callbacks: HashMap::new(), 
             cursor_position: Point::ZERO,
         }
     }
-    fn add_key_event_callback<F: Fn(ElementState) -> () + 'static>(&mut self, key: VirtualKeyCode, callback: F) {
-        self.key_event_callbacks.insert(key, Box::new(callback));
+    pub fn add_key_event_callback(&mut self, key: VirtualKeyCode, callback: fn(ElementState)) {
+        self.key_event_callbacks.insert(key, callback);
     }
-    fn add_mouse_click_event_callback<F: Fn(ElementState) -> () + 'static>(&mut self, button: MouseButton, bounds: Option<[Point;2]>, callback: F) {
+    pub fn add_mouse_click_event_callback(&mut self, button: MouseButton, bounds: Option<[Point;2]>, callback: fn(ElementState)) {
         if let Some(bounds) = bounds {
-            self.mouse_click_event_callbacks.insert(button, (bounds, Box::new(callback)));
+            self.mouse_click_event_callbacks.insert(button, (bounds, callback));
         } else {
             let bounds = [[-1., 1.].into(), [1., -1.].into()];
-            self.mouse_click_event_callbacks.insert(button, (bounds, Box::new(callback)));
+            self.mouse_click_event_callbacks.insert(button, (bounds, callback));
         }
     }
 }

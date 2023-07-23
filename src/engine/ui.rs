@@ -1,15 +1,20 @@
+use winit::event::ElementState;
+
 use crate::engine::draw::{ Renderer, Point, Color };
+use crate::engine::window::InputHandler;
 
 struct UIContext<'a> {
     menus: Vec<Menu>,
     renderer: &'a mut Renderer,
+    input_handler: &'a mut InputHandler,
 }
 impl<'a> UIContext<'a> {
-    fn new(renderer: &'a mut Renderer) -> Self {
+    fn new(renderer: &'a mut Renderer, input_handler: &'a mut InputHandler) -> Self {
         
         UIContext { 
             menus: Vec::new(), 
             renderer, 
+            input_handler,
         }
     }
 
@@ -19,7 +24,7 @@ impl<'a> UIContext<'a> {
 
     fn draw_menus(&mut self) {
         for menu in self.menus.iter_mut() {
-            menu.draw_menu(self.renderer)
+            menu.draw_menu(self.renderer, self.input_handler)
         }
     }
 }
@@ -123,14 +128,14 @@ impl Menu {
         }
     }
 
-    fn draw_menu(&mut self, renderer: &mut Renderer) {
+    fn draw_menu(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler) {
         renderer.draw_rect(self.corners, self.bg_color);
         renderer.draw_box(self.corners, self.frame_thickness, self.frame_color);
 
         let mut widget_offset = self.corners[0] - [-1. * (self.frame_thickness + self.spacing), self.frame_thickness + self.spacing].into();
         for (i, widget) in self.wigets.iter_mut().enumerate() {
             widget_offset = widget_offset - [0., self.spacing * i as f32].into();
-            widget.draw_widget(renderer, widget_offset);
+            widget.display_widget(renderer, input_handler,  widget_offset);
             widget_offset = widget_offset - [0., widget.height()].into();
         }
     }
@@ -143,7 +148,7 @@ impl Menu {
 }
 
 trait Widget {
-    fn draw_widget(&mut self, renderer: &mut Renderer, position: Point);
+    fn display_widget(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler, position: Point);
     fn height(&self) -> f32;
     fn set_text_color_if_none(&mut self, text_color: Color);
 }
@@ -167,7 +172,7 @@ impl Widget for Label {
         self.font_size
     }
 
-    fn draw_widget(&mut self, renderer: &mut Renderer, position: Point) {
+    fn display_widget(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler, position: Point) {
         if let Some(text_color) = self.text_color {
             renderer.draw_text(position, &self.text, text_color, self.font_size)
         } else {
@@ -190,7 +195,7 @@ struct Button {
     frame_thickness: f32,
     frame_color: Color,
     bounds: Option<[Point;2]>,
-    callback: Box<dyn FnOnce() -> ()>,
+    callback: fn(ElementState),
 }
 impl Button {
     fn new(
@@ -200,7 +205,7 @@ impl Button {
         padding: f32,
         frame_thickness: f32,
         frame_color: Color,
-        callback: Box<dyn FnOnce() -> ()>,
+        callback: fn(ElementState),
     ) -> Self {
         Button { 
             text, 
@@ -227,8 +232,10 @@ impl Widget for Button {
     fn height(&self) -> f32 {
         self.font_size
     }
-    fn draw_widget(&mut self, renderer: &mut Renderer, position: Point) {
+    fn display_widget(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler, position: Point) {
         self.calculate_bounds(position);
+        input_handler.add_mouse_click_event_callback(winit::event::MouseButton::Left, self.bounds, self.callback);
+        
         if let Some(text_color) = self.text_color {
             if let Some(bounds) = self.bounds {
                 renderer.draw_box(bounds, self.frame_thickness, self.frame_color);
@@ -250,20 +257,24 @@ impl Widget for Button {
 // ----- TESTS -----
 #[cfg(test)]
 mod tests {
+    use crate::engine::window::WindowHandler;
+
     use super::*;  
     
+    use winit::window::WindowBuilder;
     use winit::{window::Window, event_loop::EventLoopBuilder};
     use winit::platform::wayland::EventLoopBuilderExtWayland;
 
     #[test]
     fn test_ui() {
         async fn run() {
-            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
-            let window = Window::new(&event_loop).unwrap();
-            let mut renderer = Renderer::new(&window).await;
-            event_loop.run(move |_, _, _| {
+            let window_handler = WindowHandler::from_builders(
+                WindowBuilder::default(),
+                EventLoopBuilder::default().with_any_thread(true),
+            ).await;
+            window_handler.main_loop(|renderer, input_handler| {
 
-                let mut ui = UIContext::new(&mut renderer);
+                let mut ui = UIContext::new(renderer, input_handler);
                 
                 let mut test_menu = Menu::from_style(
                     MenuStyle::default(),
@@ -278,7 +289,7 @@ mod tests {
                     0.01, 
                     0.01, 
                     Color::BLUE, 
-                    Box::new(|| {}),
+                    |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
                 )));
 
                 ui.add_menu(test_menu);
