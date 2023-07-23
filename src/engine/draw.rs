@@ -284,6 +284,12 @@ impl Point {
     }
 
     pub const ZERO: Self = Point{ x: 0., y: 0., };
+
+    pub fn within(&self, bounds: [Point;2]) -> bool {
+        (self.x >= bounds[0].x && self.y <= bounds[0].y)
+        &&
+        (self.x <= bounds[1].x && self.y >= bounds[1].y)
+    }
 }
 
 
@@ -813,6 +819,22 @@ mod tests {
         assert_eq!(Point{ x:0.25, y:0.75}, Point{x:0.5, y:1.0}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
     
         assert_eq!(Point{ x: 0., y: 0., } , Point{ x: -0.5, y: 0.5 }.add_x_sub_y(0.5), "ERROR: Failed assertion while calling add_x_sub_y on Point")
+    }
+    #[test]
+    fn test_point_within() {
+        assert_eq!(true, Point{ x: 0., y: 0., }.within([
+            Point{ x:-0.5, y:0.5},
+            Point{ x:0.5, y:-0.5},
+        ]),
+        "ERROR: Failed assertion while calling within on Point, should be true"
+        );
+
+        assert_eq!(false, Point{ x: 0.75, y: -0.25, }.within([
+            Point{ x:-0.5, y:0.5},
+            Point{ x:0.5, y:-0.5},
+        ]),
+        "ERROR: Failed assertion while calling within on Point, should be false"
+        );
     }
 
     // ----- RENDERER TESTS -----
