@@ -227,6 +227,14 @@ impl From<[f32;2]> for Point {
         };
     }
 }
+impl From<[f64;2]> for Point {
+    fn from(value: [f64;2]) -> Self {
+        return Point{ 
+            x: value[0] as f32,
+            y: value[1] as f32,
+        };
+    }
+}
 impl From<Point> for [f32;3] {
     fn from(value: Point) -> Self {
         return [ 
@@ -274,6 +282,8 @@ impl Point {
             y: self.y - rhs,
         }
     }
+
+    pub const ZERO: Self = Point{ x: 0., y: 0., };
 }
 
 
@@ -293,7 +303,7 @@ impl Vertex {
 }
 
 pub struct Renderer {
-    size: winit::dpi::PhysicalSize<u32>,
+    pub size: winit::dpi::PhysicalSize<u32>,
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
