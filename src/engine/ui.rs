@@ -215,10 +215,10 @@ impl Button {
     }
     fn calculate_bounds(&mut self, position: Point) {
         self.bounds = Some([
-            position - [0., self.frame_thickness + self.padding].into(),
+            position,
             [
-                position.x + self.text.len() as f32 * (self.font_size / 2.) as f32 + self.padding, 
-                position.y - self.height() - self.frame_thickness - self.padding,
+                position.x + ((self.text.len() as f32 * (self.font_size / 2.)) * 0.95) + (2. * (self.frame_thickness + self.padding)), 
+                position.y - self.height() - (2. * (self.frame_thickness + self.padding)),
             ].into(),
         ])
     }
