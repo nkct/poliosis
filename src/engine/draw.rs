@@ -837,9 +837,6 @@ mod tests {
                         renderer.resize(new_size);
                     },
                     Event::MainEventsCleared => {
-                        window.request_redraw();
-                    },
-                    Event::RedrawRequested(_) => {
                         renderer.render().unwrap()
                     },
                     _ => {},
