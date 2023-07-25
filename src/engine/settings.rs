@@ -1,61 +1,83 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::collections::HashMap;
 
-pub trait Setting: Debug {
-    fn set_in(self, settings: &mut Settings, setting_name: String) where Self: Sized;
+pub enum Setting {
+    Bool(bool),
+    Float(f32),
+    String(String),
 }
-impl Setting for bool {
-    fn set_in(self, settings: &mut Settings, setting_name: String) where Self: Sized {
-        settings.bool_settings.insert(setting_name, self);
+impl From<bool> for Setting {
+    fn from(value: bool) -> Self {
+        Setting::Bool(value)
     }
 }
-impl Setting for f32 {
-    fn set_in(self, settings: &mut Settings, setting_name: String) where Self: Sized {
-        settings.float_setting.insert(setting_name, self);
+impl From<f32> for Setting {
+    fn from(value: f32) -> Self {
+        Setting::Float(value)
     }
 }
-impl Setting for String {
-    fn set_in(self, settings: &mut Settings, setting_name: String) where Self: Sized {
-        settings.string_setting.insert(setting_name, self);
+impl From<String> for Setting {
+    fn from(value: String) -> Self {
+        Setting::String(value)
+    }
+}
+
+impl From<&Setting> for Option<bool> {
+    fn from(value: &Setting) -> Self {
+        if let Setting::Bool(value) = value {
+            return Some(*value);
+        }
+        return None;
+    }
+}
+impl From<&Setting> for Option<f32> {
+    fn from(value: &Setting) -> Self {
+        if let Setting::Float(value) = value {
+            return Some(*value);
+        }
+        return None;
+    }
+}
+impl From<&Setting> for Option<String> {
+    fn from(value: &Setting) -> Self {
+        if let Setting::String(value) = value {
+            return Some(value.to_string());
+        }
+        return None;
     }
 }
 
 pub struct Settings {
-    bool_settings: HashMap<String, bool>,
-    float_setting: HashMap<String, f32>,
-    string_setting: HashMap<String, String>,
+    settings: HashMap<String, Setting>,
 }
 impl Settings {
     fn new() -> Self {
         Settings { 
-            bool_settings: HashMap::new(), 
-            float_setting: HashMap::new(), 
-            string_setting: HashMap::new(),
+            settings: HashMap::new(), 
         }
     }
 
-    fn get(&self, setting_name: &str) -> Option<Box<&dyn Setting>> {
-        if let Some(bool) = self.bool_settings.get(setting_name) {
-            return Some(Box::new(bool));
+    fn get_setting(&self, setting_name: &str) -> Option<&Setting> {
+        self.settings.get(setting_name)
+    }
+    fn get<'a, I>(&'a self, setting_name: &str) -> Option<I> 
+    where 
+        Option<I>: From<&'a Setting>
+    {
+        if let Some(setting) = self.get_setting(setting_name) {
+            return setting.into()
+        } else {
+            return None
         }
-        if let Some(float) = self.float_setting.get(setting_name) {
-            return Some(Box::new(float));
-        }
-        if let Some(string) = self.string_setting.get(setting_name) {
-            return Some(Box::new(string));
-        }
-        return None;
     }
 
-    fn set<S: Setting>(&mut self, setting_name: &str, value: S) {
-        value.set_in(self, setting_name.to_owned())
+    fn set<S: Into<Setting>>(&mut self, setting_name: &str, value: S) {
+        self.settings.insert(setting_name.to_owned(), value.into());
     }
 }
 
 // ----- TESTS -----
 #[cfg(test)]
 mod tests {
-    use crate::engine::window::WindowHandler;
-
     use super::*;  
 
     #[test]
@@ -65,7 +87,22 @@ mod tests {
         settings.set("bool_setting", false);
         settings.set("float_setting", 1.0);
         settings.set("string_setting", "string".to_owned());
-
         
+        assert_eq!(
+            Some(false), 
+            settings.get::<bool>("bool_setting"),
+            "ERROR: failed assertion when getting bool from settings"
+        );
+        assert_eq!(
+            Some(1.0), 
+            settings.get::<f32>("float_setting"),
+            "ERROR: failed assertion when getting f32 from settings"
+        );
+        assert_eq!(
+            Some("string".to_owned()), 
+            settings.get::<String>("string_setting"),
+            "ERROR: failed assertion when getting String from settings"
+        );
+
     }
 }
