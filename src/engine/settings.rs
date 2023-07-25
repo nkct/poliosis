@@ -1,9 +1,19 @@
 use std::collections::HashMap;
 
+pub trait OtherSetting: std::fmt::Debug{
+    fn box_clone(&self) -> Box<dyn OtherSetting>;
+}
+impl Clone for Box<dyn OtherSetting> {
+    fn clone(&self) -> Self {
+        self.box_clone()
+    }
+}
+
 pub enum Setting {
     Bool(bool),
     Float(f32),
     String(String),
+    Other(Box<dyn OtherSetting>)
 }
 impl From<bool> for Setting {
     fn from(value: bool) -> Self {
@@ -18,6 +28,14 @@ impl From<f32> for Setting {
 impl From<String> for Setting {
     fn from(value: String) -> Self {
         Setting::String(value)
+    }
+}
+impl<O> From<O> for Setting 
+where
+    O: OtherSetting + 'static
+{
+    fn from(value: O) -> Self {
+        Setting::Other(Box::new(value))
     }
 }
 
@@ -41,6 +59,15 @@ impl From<&Setting> for Option<String> {
     fn from(value: &Setting) -> Self {
         if let Setting::String(value) = value {
             return Some(value.to_string());
+        }
+        return None;
+    }
+}
+
+impl From<&Setting> for Option<Box<dyn OtherSetting>> {
+    fn from(value: &Setting) -> Self {
+        if let Setting::Other(value) = value {
+            return Some(value.clone());
         }
         return None;
     }
@@ -81,7 +108,7 @@ mod tests {
     use super::*;  
 
     #[test]
-    fn test_settings() {
+    fn test_settings_getters() {
         let mut settings = Settings::new();
 
         settings.set("bool_setting", false);
@@ -103,6 +130,25 @@ mod tests {
             settings.get::<String>("string_setting"),
             "ERROR: failed assertion when getting String from settings"
         );
+    }
 
+    #[test]
+    fn test_settings_other() {
+        let mut settings = Settings::new();
+
+        #[derive(Clone, Debug)]
+        enum TestOtherSetting {
+            Variant1,   
+            Variant2,   
+            Variant3,   
+        }
+        impl OtherSetting for TestOtherSetting {
+            fn box_clone(&self) -> Box<dyn OtherSetting> {
+                Box::new((*self).clone())
+            }
+        }
+
+        settings.set("other_setting", TestOtherSetting::Variant2);
+        let other_setting = settings.get::<Box<dyn OtherSetting>>("other_setting");
     }
 }
