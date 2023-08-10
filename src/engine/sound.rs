@@ -1,31 +1,39 @@
-use std::path::{PathBuf};
 use std::{fs::File, error::Error};
 use std::io::BufReader;
 
-use rodio::{Decoder, Sink, OutputStream};
+use rodio::source::Buffered;
+use rodio::{Decoder, Sink, OutputStream, Source};
 
-struct AudioPlayer {
-    sink: Sink,
+struct AudioHandler {
+    sources: Vec<Buffered<Decoder<BufReader<File>>>>,
 }
-impl AudioPlayer {
+impl AudioHandler {
     fn new() -> Self {
-        let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-        let sink = Sink::try_new(&stream_handle).unwrap();
-        sink.pause();
-        AudioPlayer { sink }
+        Self { 
+            sources: Vec::new()
+         }
     }
 
-    fn add(self, path: &str) -> Result<Self, Box<dyn Error>> {
+    fn add(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
         let file = BufReader::new(File::open(path)?);
         let source = Decoder::new(file)?;
-        self.sink.append(source);
+        self.sources.push(source.buffered());
 
-        Ok(self)
+        Ok(())
     }
 
-    fn play(self) {
-        self.sink.play();
-        self.sink.sleep_until_end();
+    fn play(self) -> Result<(), Box<dyn Error>> {
+        let (_stream, stream_handle) = OutputStream::try_default()?;
+        let sink = Sink::try_new(&stream_handle)?;
+
+        for source in self.sources {
+            sink.append(source)
+        }
+
+        sink.play();
+        sink.sleep_until_end();
+
+        Ok(())
     }
 }
 
@@ -36,8 +44,8 @@ mod tests {
 
     #[test]
     fn test_audioplayer() {
-        AudioPlayer::new()
-            .add("sound/alarm.wav").unwrap()
-            .play();
+        let mut audio_handler = AudioHandler::new();
+        audio_handler.add("sound/alarm.wav").unwrap();
+        audio_handler.play().unwrap();
     }
 }
