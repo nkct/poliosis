@@ -104,10 +104,10 @@ struct Menu {
     default_text_color: Color
 }
 impl Menu {
-    fn new(corners: [Point;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32, default_text_color: Color) -> Self {
+    fn new<P: Into<Point>>(corners: [P;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32, default_text_color: Color) -> Self {
         Menu {
             wigets: Vec::new(),
-            corners,
+            corners: corners.map(|p| p.into()),
             frame_thickness,
             bg_color,
             frame_color,
@@ -116,10 +116,10 @@ impl Menu {
         }
     }
 
-    fn from_style(style: MenuStyle, corners: [Point;2]) -> Self {
+    fn from_style<P: Into<Point>>(style: MenuStyle, corners: [P;2]) -> Self {
         Menu {
             wigets: Vec::new(),
-            corners,
+            corners: corners.map(|p| p.into()),
             frame_thickness: style.frame_thickness,
             bg_color: style.bg_color,
             frame_color: style.frame_color,
@@ -159,9 +159,9 @@ struct Label {
     text_color: Option<Color>,
 }
 impl Label {
-    fn new(text: String, font_size: f32, text_color: Option<Color>) -> Label {
+    fn new(text: &str, font_size: f32, text_color: Option<Color>) -> Label {
         Label {
-            text,
+            text: text.to_string(),
             font_size,
             text_color,
         }
@@ -199,7 +199,7 @@ struct Button {
 }
 impl Button {
     fn new(
-        text: String,
+        text: &str,
         font_size: f32,
         text_color: Option<Color>,
         padding: f32,
@@ -208,7 +208,7 @@ impl Button {
         callback: fn(ElementState),
     ) -> Self {
         Button { 
-            text, 
+            text: text.to_string(), 
             font_size, 
             text_color, 
             padding, 
@@ -278,12 +278,12 @@ mod tests {
                 
                 let mut test_menu = Menu::from_style(
                     MenuStyle::default(),
-                    [[-0.5, 0.5].into(), [0.5, -0.5].into()],
+                    [[-0.5, 0.5], [0.5, -0.5]],
                 );
 
-                test_menu.add_widget(Label::new("Hello World".to_string(), 0.1, None));
+                test_menu.add_widget(Label::new("Hello World", 0.1, None));
                 test_menu.add_widget(Button::new(
-                    "Hello World!".to_string(), 
+                    "Hello World!", 
                     0.1, 
                     None, 
                     0.01, 
