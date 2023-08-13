@@ -140,10 +140,10 @@ impl Menu {
         }
     }
 
-    fn add_widget(&mut self, widget: Box<dyn Widget>) {
+    fn add_widget<W: Widget + 'static>(&mut self, widget: W) {
         let mut widget = widget;
         widget.set_text_color_if_none(self.default_text_color);
-        self.wigets.push(widget)
+        self.wigets.push(Box::new(widget))
     }
 }
 
@@ -281,8 +281,8 @@ mod tests {
                     [[-0.5, 0.5].into(), [0.5, -0.5].into()],
                 );
 
-                test_menu.add_widget(Box::new(Label::new("Hello World".to_string(), 0.1, None)));
-                test_menu.add_widget(Box::new(Button::new(
+                test_menu.add_widget(Label::new("Hello World".to_string(), 0.1, None));
+                test_menu.add_widget(Button::new(
                     "Hello World!".to_string(), 
                     0.1, 
                     None, 
@@ -290,7 +290,7 @@ mod tests {
                     0.01, 
                     Color::BLUE, 
                     |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
-                )));
+                ));
 
                 ui.add_menu(test_menu);
                 ui.draw_menus();
