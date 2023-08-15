@@ -323,4 +323,41 @@ mod tests {
         }
         pollster::block_on(run())
     }
+
+    // showcasing how to define and use a custom default stle for a widget
+    #[test]
+    fn test_ui_custom_defaults() {
+        async fn run() {
+            let window_handler = WindowHandler::from_builders(
+                WindowBuilder::default(),
+                EventLoopBuilder::default().with_any_thread(true),
+            ).await;
+            window_handler.main_loop(|renderer, input_handler| {
+
+                let my_custom_default_button: Button = Button{
+                    text: "HELLO!".to_string(),
+                    frame_color: Color::BLUE,
+                    ..Button::default()
+                };
+
+                let mut ui = UIContext::new(renderer, input_handler);
+                
+                let mut test_menu = Menu::from_style(
+                    MenuStyle::default(),
+                    [[-0.5, 0.5], [0.5, -0.5]],
+                );
+
+                test_menu.add_widget(Button{
+                    callback: |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
+                    ..my_custom_default_button
+                });
+
+                ui.add_menu(test_menu);
+                ui.draw_menus();
+
+                renderer.render().unwrap();
+            });
+        }
+        pollster::block_on(run())
+    }
 }
