@@ -158,6 +158,15 @@ struct Label {
     font_size: f32,
     text_color: Option<Color>,
 }
+impl Default for Label {
+    fn default() -> Self {
+        Label {
+            text: "".to_owned(),
+            font_size: 0.1,
+            text_color: None,
+        }
+    }
+}
 impl Label {
     fn new(text: &str, font_size: f32, text_color: Option<Color>) -> Label {
         Label {
@@ -172,7 +181,7 @@ impl Widget for Label {
         self.font_size
     }
 
-    fn display_widget(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler, position: Point) {
+    fn display_widget(&mut self, renderer: &mut Renderer, _input_handler: &mut InputHandler, position: Point) {
         if let Some(text_color) = self.text_color {
             renderer.draw_text(position, &self.text, text_color, self.font_size)
         } else {
@@ -196,6 +205,20 @@ struct Button {
     frame_color: Color,
     bounds: Option<[Point;2]>,
     callback: fn(ElementState),
+}
+impl Default for Button {
+    fn default() -> Self {
+            Button {
+            text: "".to_string(),
+            font_size: 0.1,
+            text_color: None,
+            padding: 0.01,
+            frame_thickness: 0.01,
+            frame_color: Color::WHITE,
+            bounds: None,
+            callback: |_| {},
+        }
+    }
 }
 impl Button {
     fn new(
