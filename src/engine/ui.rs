@@ -232,7 +232,8 @@ mod tests {
     use winit::platform::wayland::EventLoopBuilderExtWayland;
 
     #[test]
-    fn test_ui() {
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_ui_widgets() {
         async fn run() {
             let window_handler = WindowHandler::from_builders(
                 WindowBuilder::default(),
@@ -244,16 +245,20 @@ mod tests {
                 
                 let mut test_menu = Menu::from_corners([[-0.5, 0.5], [0.5, -0.5]]);
 
-                test_menu.add_widget(Label::new("Hello World", 0.1, None));
-                test_menu.add_widget(Button::new(
-                    "Hello World!", 
-                    0.1, 
-                    None, 
-                    0.01, 
-                    0.01, 
-                    Color::BLUE, 
-                    |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
-                ));
+                test_menu.add_widget(
+                    Label{
+                        text: "Hello World".to_owned(),
+                        ..Default::default()
+                    }
+                );
+                test_menu.add_widget(
+                    Button{
+                        text: "Hello World!".to_owned(),
+                        frame_color: Color::BLUE, 
+                        callback: |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
+                        ..Default::default()
+                    }
+                );
 
                 ui.add_menu(test_menu);
                 ui.draw_menus();
@@ -266,6 +271,7 @@ mod tests {
 
     // showcasing how to define and use a custom default stle for a widget
     #[test]
+    #[ignore = "requires manual validation, run separetely"]
     fn test_ui_custom_defaults() {
         async fn run() {
             let window_handler = WindowHandler::from_builders(
