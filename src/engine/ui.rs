@@ -29,71 +29,7 @@ impl<'a> UIContext<'a> {
     }
 }
 
-struct MenuStyle {
-    frame_thickness: f32,
-    bg_color: Color,
-    frame_color: Color,
-    spacing: f32,
-    default_text_color: Color
-}
-impl Default for MenuStyle {
-    fn default() -> Self {
-        MenuStyle {
-            frame_thickness: 0.01,
-            bg_color: Color::BLACK,
-            frame_color: Color::WHITE,
-            spacing: 0.005,
-            default_text_color: Color::WHITE
-        }
-    }
-}
-impl MenuStyle {
-    fn with_frame_thickness(&self, frame_thickness: f32) -> Self {
-        MenuStyle {
-            frame_thickness,
-            bg_color: self.bg_color,
-            frame_color: self.frame_color,
-            spacing: self.spacing,
-            default_text_color: self.default_text_color,
-        }
-    }
-    fn with_bg_color(&self, bg_color: Color) -> Self {
-        MenuStyle {
-            frame_thickness: self.frame_thickness,
-            bg_color,
-            frame_color: self.frame_color,
-            spacing: self.spacing,
-            default_text_color: self.default_text_color,
-        }
-    }
-    fn with_frame_color(&self, frame_color: Color) -> Self {
-        MenuStyle {
-            frame_thickness: self.frame_thickness,
-            bg_color: self.bg_color,
-            frame_color,
-            spacing: self.spacing,
-            default_text_color: self.default_text_color,
-        }
-    }
-    fn with_spacing(&self, spacing: f32) -> Self {
-        MenuStyle {
-            frame_thickness: self.frame_thickness,
-            bg_color: self.bg_color,
-            frame_color: self.frame_color,
-            spacing,
-            default_text_color: self.default_text_color,
-        }
-    }
-    fn with_default_text_color(&self, default_text_color: Color) -> Self {
-        MenuStyle {
-            frame_thickness: self.frame_thickness,
-            bg_color: self.bg_color,
-            frame_color: self.frame_color,
-            spacing: self.spacing,
-            default_text_color,
-        }
-    }
-}
+
 struct Menu {
     wigets: Vec<Box<dyn Widget>>,
     corners: [Point;2],
@@ -102,6 +38,19 @@ struct Menu {
     frame_color: Color,
     spacing: f32,
     default_text_color: Color
+}
+impl Default for Menu {
+    fn default() -> Self {
+        Menu {
+            wigets: Vec::new(),
+            corners: [Point::ZERO, Point::ZERO],
+            frame_thickness: 0.01,
+            bg_color: Color::BLACK,
+            frame_color: Color::WHITE,
+            spacing: 0.005,
+            default_text_color: Color::WHITE
+        }  
+    }
 }
 impl Menu {
     fn new<P: Into<Point>>(corners: [P;2], frame_thickness: f32, bg_color: Color, frame_color: Color, spacing: f32, default_text_color: Color) -> Self {
@@ -115,16 +64,10 @@ impl Menu {
             default_text_color,
         }
     }
-
-    fn from_style<P: Into<Point>>(style: MenuStyle, corners: [P;2]) -> Self {
+    fn from_corners<P: Into<Point>>(corners: [P;2]) -> Self{
         Menu {
-            wigets: Vec::new(),
             corners: corners.map(|p| p.into()),
-            frame_thickness: style.frame_thickness,
-            bg_color: style.bg_color,
-            frame_color: style.frame_color,
-            spacing: style.spacing,
-            default_text_color: style.default_text_color,
+            ..Default::default()
         }
     }
 
@@ -299,10 +242,7 @@ mod tests {
 
                 let mut ui = UIContext::new(renderer, input_handler);
                 
-                let mut test_menu = Menu::from_style(
-                    MenuStyle::default(),
-                    [[-0.5, 0.5], [0.5, -0.5]],
-                );
+                let mut test_menu = Menu::from_corners([[-0.5, 0.5], [0.5, -0.5]]);
 
                 test_menu.add_widget(Label::new("Hello World", 0.1, None));
                 test_menu.add_widget(Button::new(
@@ -342,10 +282,7 @@ mod tests {
 
                 let mut ui = UIContext::new(renderer, input_handler);
                 
-                let mut test_menu = Menu::from_style(
-                    MenuStyle::default(),
-                    [[-0.5, 0.5], [0.5, -0.5]],
-                );
+                let mut test_menu = Menu::from_corners([[-0.5, 0.5], [0.5, -0.5]]);
 
                 test_menu.add_widget(Button{
                     callback: |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
