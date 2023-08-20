@@ -18,8 +18,9 @@ impl<'a> UIContext<'a> {
         }
     }
 
-    fn add_menu(&mut self, menu: Menu) {
-        self.menus.push(menu)
+    fn add_menu(&mut self, menu: Menu) -> &mut Menu{
+        self.menus.push(menu);
+        return self.menus.iter_mut().last().unwrap();
     }
 
     fn draw_menus(&mut self) {
@@ -243,7 +244,7 @@ mod tests {
 
                 let mut ui = UIContext::new(renderer, input_handler);
                 
-                let mut test_menu = Menu::from_corners([[-0.5, 0.5], [0.5, -0.5]]);
+                let test_menu = ui.add_menu(Menu::from_corners([[-0.5, 0.5], [0.5, -0.5]]));
 
                 test_menu.add_widget(
                     Label{
@@ -260,9 +261,7 @@ mod tests {
                     }
                 );
 
-                ui.add_menu(test_menu);
                 ui.draw_menus();
-
                 renderer.render().unwrap();
             });
         }
