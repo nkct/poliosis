@@ -44,7 +44,10 @@ impl WindowHandler {
         }
     }
 
-    pub fn main_loop<F: FnMut(&mut Renderer, &mut InputHandler) -> () + 'static>(mut self, mut f: F) {   
+    pub fn main_loop<F>(mut self, mut f: F) 
+    where
+        F: FnMut(&mut Renderer, &mut InputHandler) -> () + 'static
+    {   
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::WindowEvent { event, .. } => {
@@ -59,7 +62,7 @@ impl WindowHandler {
                             self.input_handler.cursor_position = [
                                 position.x / (self.renderer.size.width  as f64 / 2.) - 1., 
                                 -1. * position.y / (self.renderer.size.height as f64 / 2.) + 1.,
-                                ].into();
+                            ].into();
                         },
                         WindowEvent::MouseInput { state: key_state, button: event_button, .. } => {
                             for (callback_button, (bounds, callback)) in self.input_handler.mouse_click_event_callbacks.iter() {
@@ -79,7 +82,7 @@ impl WindowHandler {
                     }
                 },
                 Event::MainEventsCleared => {
-                    f(&mut self.renderer, &mut self.input_handler)
+                    f(&mut self.renderer, &mut self.input_handler);
                 },
                 _ => ()
             }
@@ -134,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn test_windowhandler_inputhandler_key_event() {
+    fn test_inputhandler_key_event() {
         async fn run() {
             let window_handler = WindowHandler::from_builders(
                 WindowBuilder::default(),
