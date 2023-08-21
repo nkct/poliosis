@@ -23,6 +23,10 @@ impl<'a> UIContext<'a> {
         return self.menus.iter_mut().last().unwrap();
     }
 
+    fn remove_menu(&mut self, index: usize) {
+        self.menus.remove(index);
+    }
+
     fn draw_menus(&mut self) {
         for menu in self.menus.iter_mut() {
             menu.draw_menu(self.renderer, self.input_handler)
@@ -97,30 +101,30 @@ trait Widget {
     fn set_text_color_if_none(&mut self, text_color: Color);
 }
 
-struct Label {
-    text: String,
+struct Label<'a> {
+    text: &'a str,
     font_size: f32,
     text_color: Option<Color>,
 }
-impl Default for Label {
+impl Default for Label<'_> {
     fn default() -> Self {
         Label {
-            text: "".to_owned(),
+            text: "",
             font_size: 0.1,
             text_color: None,
         }
     }
 }
-impl Label {
+impl Label<'_> {
     fn new(text: &str, font_size: f32, text_color: Option<Color>) -> Label {
         Label {
-            text: text.to_string(),
+            text: text,
             font_size,
             text_color,
         }
     }
 }
-impl Widget for Label {
+impl Widget for Label<'_> {
     fn height(&self) -> f32 {
         self.font_size
     }
@@ -140,8 +144,8 @@ impl Widget for Label {
     }
 }
 
-struct Button {
-    text: String,
+struct Button<'a> {
+    text: &'a str,
     font_size: f32,
     text_color: Option<Color>,
     padding: f32,
@@ -150,10 +154,10 @@ struct Button {
     bounds: Option<[Point;2]>,
     callback: fn(ElementState),
 }
-impl Default for Button {
+impl Default for Button<'_> {
     fn default() -> Self {
             Button {
-            text: "".to_string(),
+            text: "",
             font_size: 0.1,
             text_color: None,
             padding: 0.01,
@@ -164,9 +168,9 @@ impl Default for Button {
         }
     }
 }
-impl Button {
+impl<'a> Button<'a> {
     fn new(
-        text: &str,
+        text: &'a str,
         font_size: f32,
         text_color: Option<Color>,
         padding: f32,
@@ -175,7 +179,7 @@ impl Button {
         callback: fn(ElementState),
     ) -> Self {
         Button { 
-            text: text.to_string(), 
+            text: text, 
             font_size, 
             text_color, 
             padding, 
@@ -195,7 +199,7 @@ impl Button {
         ])
     }
 }
-impl Widget for Button {
+impl Widget for Button<'_> {
     fn height(&self) -> f32 {
         self.font_size
     }
@@ -229,7 +233,7 @@ mod tests {
     use super::*;  
     
     use winit::window::WindowBuilder;
-    use winit::{window::Window, event_loop::EventLoopBuilder};
+    use winit::event_loop::EventLoopBuilder;
     use winit::platform::wayland::EventLoopBuilderExtWayland;
 
     #[test]
@@ -248,13 +252,13 @@ mod tests {
 
                 test_menu.add_widget(
                     Label{
-                        text: "Hello World".to_owned(),
+                        text: "Hello World",
                         ..Default::default()
                     }
                 );
                 test_menu.add_widget(
                     Button{
-                        text: "Hello World!".to_owned(),
+                        text: "Hello World!",
                         frame_color: Color::BLUE, 
                         callback: |bttn_state| { if bttn_state == ElementState::Pressed {println!("button clicked")} },
                         ..Default::default()
@@ -280,7 +284,7 @@ mod tests {
             window_handler.main_loop(|renderer, input_handler| {
 
                 let my_custom_default_button: Button = Button{
-                    text: "HELLO!".to_string(),
+                    text: "HELLO!",
                     frame_color: Color::BLUE,
                     ..Button::default()
                 };
