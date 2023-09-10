@@ -118,7 +118,7 @@ impl Default for Label<'_> {
 impl Label<'_> {
     fn new(text: &str, font_size: f32, text_color: Option<Color>) -> Label {
         Label {
-            text: text,
+            text,
             font_size,
             text_color,
         }
@@ -126,12 +126,12 @@ impl Label<'_> {
 }
 impl Widget for Label<'_> {
     fn height(&self) -> f32 {
-        self.font_size
+        self.font_size * self.text.split("\n").collect::<Vec<_>>().len() as f32
     }
 
     fn display_widget(&mut self, renderer: &mut Renderer, _input_handler: &mut InputHandler, position: Point) {
         if let Some(text_color) = self.text_color {
-            renderer.draw_text(position, &self.text, text_color, self.font_size)
+            renderer.draw_text(position, self.text, text_color, self.font_size)
         } else {
             panic!("ERROR: attempted to draw UI widget without a text_color")
         }
@@ -193,7 +193,7 @@ impl<'a> Button<'a> {
         self.bounds = Some([
             position,
             [
-                position.x + ((self.text.len() as f32 * (self.font_size / 2.)) * 0.95) + (2. * (self.frame_thickness + self.padding)), 
+                position.x + (((self.text.len() as f32 / self.text.split("\n").collect::<Vec<_>>().len() as f32) * (self.font_size / 2.)) * 0.95) + (2. * (self.frame_thickness + self.padding)), 
                 position.y - self.height() - (2. * (self.frame_thickness + self.padding)),
             ].into(),
         ])
@@ -201,7 +201,7 @@ impl<'a> Button<'a> {
 }
 impl Widget for Button<'_> {
     fn height(&self) -> f32 {
-        self.font_size
+        self.font_size * self.text.split("\n").collect::<Vec<_>>().len() as f32
     }
     fn display_widget(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler, position: Point) {
         self.calculate_bounds(position);
@@ -213,7 +213,7 @@ impl Widget for Button<'_> {
             } else {
                 panic!("ERROR attempted to draw UI Button without bounds")
             }
-            renderer.draw_text(position.add_x_sub_y(self.frame_thickness + self.padding), &self.text, text_color, self.font_size)
+            renderer.draw_text(position.add_x_sub_y(self.frame_thickness + self.padding), self.text, text_color, self.font_size)
         } else {
             panic!("ERROR: attempted to draw UI widget without a text_color")
         }
@@ -306,4 +306,48 @@ mod tests {
         }
         pollster::block_on(run())
     }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_ui_multiline() {
+        async fn run() {
+            let window_handler = WindowHandler::from_builders(
+                WindowBuilder::default(),
+                EventLoopBuilder::default().with_any_thread(true),
+            ).await;
+            window_handler.main_loop(|renderer, input_handler| {
+                let mut ui = UIContext::new(renderer, input_handler);
+                let first_menu = ui.add_menu(Menu::from_corners([[-0.5, 0.5], [0.5, -0.5]]));
+                first_menu.add_widget(
+                    Label{
+                        text: "Hello World \nHello Wordl!",
+                        ..Default::default()
+                    }
+                );
+                first_menu.add_widget(
+                    Label{
+                        text: "Goodbye World \nGoodbye Wordl!",
+                        ..Default::default()
+                    }
+                );
+                first_menu.add_widget(
+                    Button{
+                        text: "Hello World \nHello Wordl!",
+                        ..Default::default()
+                    }
+                );
+                first_menu.add_widget(
+                    Button{
+                        text: "Goodbye World \nGoodbye Wordl!",
+                        ..Default::default()
+                    }
+                );
+
+                ui.draw_menus();
+                renderer.render().unwrap();
+            });
+        }
+        pollster::block_on(run())
+    }
+
 }
