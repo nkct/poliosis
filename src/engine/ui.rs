@@ -190,18 +190,19 @@ impl<'a> Button<'a> {
         }
     }
     fn calculate_bounds(&mut self, position: Point) {
+        let num_of_lines = self.text.split("\n").collect::<Vec<_>>().len() as f32;
         self.bounds = Some([
             position,
             [
-                position.x + (((self.text.len() as f32 / self.text.split("\n").collect::<Vec<_>>().len() as f32) * (self.font_size / 2.)) * 0.95) + (2. * (self.frame_thickness + self.padding)), 
-                position.y - self.height() - (2. * (self.frame_thickness + self.padding)),
+                position.x + (((self.text.len() as f32 / num_of_lines) * (self.font_size / 2.)) * 0.95) + (2. * (self.frame_thickness + self.padding)), 
+                position.y - (self.font_size * num_of_lines) - (2. * (self.frame_thickness + self.padding)),
             ].into(),
         ])
     }
 }
 impl Widget for Button<'_> {
     fn height(&self) -> f32 {
-        self.font_size * self.text.split("\n").collect::<Vec<_>>().len() as f32
+        self.font_size * self.text.split("\n").collect::<Vec<_>>().len() as f32 + (2. * (self.frame_thickness + self.padding))
     }
     fn display_widget(&mut self, renderer: &mut Renderer, input_handler: &mut InputHandler, position: Point) {
         self.calculate_bounds(position);
