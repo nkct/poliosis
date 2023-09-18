@@ -217,13 +217,15 @@ impl Color {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {
     pub x: f32,
-    pub y: f32
+    pub y: f32,
+    pub z: f32,
 }
 impl From<[f32;2]> for Point {
     fn from(value: [f32;2]) -> Self {
         return Point{ 
             x: value[0],
             y: value[1],
+            z: 0.,
         };
     }
 }
@@ -232,6 +234,16 @@ impl From<[f64;2]> for Point {
         return Point{ 
             x: value[0] as f32,
             y: value[1] as f32,
+            z: 0.,
+        };
+    }
+}
+impl From<[f32;3]> for Point {
+    fn from(value: [f32;3]) -> Self {
+        return Point{ 
+            x: value[0],
+            y: value[1],
+            z: value[2],
         };
     }
 }
@@ -240,7 +252,7 @@ impl From<Point> for [f32;3] {
         return [ 
             value.x,
             value.y,
-            0.
+            value.z
         ];
     }
 }
@@ -251,6 +263,7 @@ impl std::ops::Add for Point {
         Point{
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+            z: self.z,
         }
     }
 }
@@ -260,6 +273,7 @@ impl std::ops::Sub for Point {
         Point{
             x: self.x - rhs.x,
             y: self.y - rhs.y,
+            z: self.z,
         }
     }
 }
@@ -268,22 +282,25 @@ impl Point {
         Point { 
             x: self.x + rhs, 
             y: self.y + rhs, 
+            z: self.z, 
         }
     }
     pub fn sub_f32(self, rhs: f32) -> Self {
         Point { 
             x: self.x - rhs, 
             y: self.y - rhs, 
+            z: self.z, 
         }
     }
     pub fn add_x_sub_y(self, rhs: f32) -> Self {
         Point { 
             x: self.x + rhs, 
             y: self.y - rhs,
+            z: self.z,
         }
     }
 
-    pub const ZERO: Self = Point{ x: 0., y: 0., };
+    pub const ZERO: Self = Point{ x: 0., y: 0., z: 0. };
 
     pub fn within(&self, bounds: [Point;2]) -> bool {
         (self.x >= bounds[0].x && self.y <= bounds[0].y)
@@ -392,7 +409,7 @@ impl Renderer {
         let y = (((delta_x * 2.) / l) * -1.).sin();
 
         let thickness = thickness/2.;
-        let p = Point{ x: (thickness * x), y: (thickness * y)};
+        let p = Point::from([x * thickness, y * thickness]);
 
         self.draw_poly([
             points[0] + p,
@@ -415,9 +432,9 @@ impl Renderer {
             corners[1],
             Point::from([corners[1].x, corners[0].y]),
 
-            corners[0] + Point{ x: thickness, y: thickness * -1. },
+            corners[0] + Point::from([thickness, thickness * -1.]),
             Point::from([corners[0].x, corners[1].y]).add_f32(thickness),
-            corners[1] + Point{ x: thickness * -1., y: thickness },
+            corners[1] + Point::from([thickness * -1., thickness]),
             Point::from([corners[1].x, corners[0].y]).sub_f32(thickness),
         ];
         let mut vertices = vertices.into_iter().map(|p| Vertex::new(p.into(), color)).collect();
@@ -565,7 +582,8 @@ impl Renderer {
             screen_position: ((width / 2.) + (position.x / 2.) * width + 1., (height / 2.) + ((position.y * -1.) / 2.) * height),
             text: vec![Text::new(text)
                 .with_color(color)
-                .with_scale(ab_glyph::PxScale {x: (scale / 2.) * width, y: (scale / 2.) * height})],
+                .with_scale(ab_glyph::PxScale {x: (scale / 2.) * width, y: (scale / 2.) * height})
+                .with_z(0.0)],
             ..Section::default()
         });
     }
@@ -691,12 +709,53 @@ impl Renderer {
         }
     }
 
+    fn zsort(&mut self) {
+        fn trig_z_cmp(indices: &Vec<u16>, vertices: &Vec<Vertex>, trig_index: usize) -> usize {
+            let z_from_index = |index: usize| -> f32 {
+                vertices[indices[index] as usize].position[2]
+            };
+
+            let mut cmp = 0;
+            let t = trig_index;
+            if z_from_index(t + 0) > z_from_index(t + 0 + 3) { cmp += 1 };
+            if z_from_index(t + 1) > z_from_index(t + 1 + 3) { cmp += 1 };
+            if z_from_index(t + 2) > z_from_index(t + 2 + 3) { cmp += 1 };
+            return cmp;
+        }
+
+        fn indices_sorted(indices: &Vec<u16>, vertices: &Vec<Vertex>) -> bool {
+            let mut i = 0;
+            while i < indices.len() - 3 {
+                if trig_z_cmp(&indices, &vertices, i) >= 2 {
+                    return false;
+                }
+                i += 3;
+            }
+
+            return true;
+        }
+
+        while !indices_sorted(&self.indices, &self.vertices) {
+            let mut t = 0;
+            while t < self.indices.len() - 3 {
+                if trig_z_cmp(&self.indices, &self.vertices, t) >= 2 {
+                    self.indices.swap(t + 0, t + 0 + 3);
+                    self.indices.swap(t + 1, t + 1 + 3);
+                    self.indices.swap(t + 2, t + 2 + 3);
+                }
+                t += 3;
+            }
+        }
+    }
+
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None, });
+
+        self.zsort();
 
         let vertex_buffer = self.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -806,32 +865,32 @@ mod tests {
     // ----- POINT TESTS -----
     #[test]
     fn test_point_convert() {
-        assert_eq!(Point::from([1., 0.]), Point{ x: 1., y: 0. }, "ERROR: Failed assertion while converting from [f32;2] to Point.");
+        assert_eq!(Point::from([1., 0.]), Point{ x: 1., y: 0. , z: 0.}, "ERROR: Failed assertion while converting from [f32;2] to Point.");
 
-        assert_eq!(<[f32;3]>::from(Point{ x: 1., y: 0. }), [1., 0., 0.], "ERROR: Failed assertion while converting from Point to [f32;3].");
+        assert_eq!(<[f32;3]>::from(Point{ x: 1., y: 0. , z: 0.}), [1., 0., 0.], "ERROR: Failed assertion while converting from Point to [f32;3].");
     }
     #[test]
     fn test_point_ops() {
-        assert_eq!(Point{ x:1.0, y:1.0}, Point{x:0.25, y:0.75} + Point{x:0.75, y:0.25}, "ERROR: Failed assertion while adding Points.");
-        assert_eq!(Point{ x:0.5, y:0.5}, Point{x:0.75, y:1.0} - Point{x:0.25, y:0.5}, "ERROR: Failed assertion while subtracting Points.");
+        assert_eq!(Point{ x:1.0, y:1.0, z: 0.}, Point{x:0.25, y:0.75, z: 0.} + Point{x:0.75, y:0.25, z: 0.}, "ERROR: Failed assertion while adding Points.");
+        assert_eq!(Point{ x:0.5, y:0.5, z: 0.}, Point{x:0.75, y:1.0, z: 0.} - Point{x:0.25, y:0.5, z: 0.}, "ERROR: Failed assertion while subtracting Points.");
 
-        assert_eq!(Point{ x:0.5, y:0.75}, Point{x:0.25, y:0.5}.add_f32(0.25), "ERROR: Failed assertion while adding Point and f32.");
-        assert_eq!(Point{ x:0.25, y:0.75}, Point{x:0.5, y:1.0}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
+        assert_eq!(Point{ x:0.5, y:0.75, z: 0.}, Point{x:0.25, y:0.5, z: 0.}.add_f32(0.25), "ERROR: Failed assertion while adding Point and f32.");
+        assert_eq!(Point{ x:0.25, y:0.75, z: 0.}, Point{x:0.5, y:1.0, z: 0.}.sub_f32(0.25), "ERROR: Failed assertion while subtracting Point and f32.");
     
-        assert_eq!(Point{ x: 0., y: 0., } , Point{ x: -0.5, y: 0.5 }.add_x_sub_y(0.5), "ERROR: Failed assertion while calling add_x_sub_y on Point")
+        assert_eq!(Point{ x: 0., y: 0., z: 0.} , Point{ x: -0.5, y: 0.5, z: 0. }.add_x_sub_y(0.5), "ERROR: Failed assertion while calling add_x_sub_y on Point")
     }
     #[test]
     fn test_point_within() {
-        assert_eq!(true, Point{ x: 0., y: 0., }.within([
-            Point{ x:-0.5, y:0.5},
-            Point{ x:0.5, y:-0.5},
+        assert_eq!(true, Point{ x: 0., y: 0., z: 0. }.within([
+            Point{ x:-0.5, y:0.5, z: 0.},
+            Point{ x:0.5, y:-0.5, z: 0.},
         ]),
         "ERROR: Failed assertion while calling within on Point, should be true"
         );
 
-        assert_eq!(false, Point{ x: 0.75, y: -0.25, }.within([
-            Point{ x:-0.5, y:0.5},
-            Point{ x:0.5, y:-0.5},
+        assert_eq!(false, Point{ x: 0.75, y: -0.25, z: 0. }.within([
+            Point{ x:-0.5, y:0.5, z: 0.},
+            Point{ x:0.5, y:-0.5, z: 0.},
         ]),
         "ERROR: Failed assertion while calling within on Point, should be false"
         );
@@ -904,6 +963,24 @@ mod tests {
             event_loop.run(move |_, _, _| {
                 renderer.draw_triangle([[0.25, 0.5], [-0.25, -0.5], [0.75, -0.5]], Color::BLUE);
                 renderer.draw_triangle([[-0.25, 0.5], [-0.75, -0.5], [0.25, -0.5]], Color::RED.with_alpha(0.5));
+
+                renderer.render().unwrap();
+            });
+        }
+        pollster::block_on(run())
+    }
+
+    #[test]
+    #[ignore = "requires manual validation, run separetely"]
+    fn test_renderer_z() {
+        async fn run() {
+            let event_loop = EventLoopBuilder::new().with_any_thread(true).build();
+            let window = Window::new(&event_loop).unwrap();
+            let mut renderer = Renderer::new(&window).await;
+            event_loop.run(move |_, _, _| {
+                renderer.draw_triangle([[0.25, 0.5, 1.0], [-0.25, -0.5, 1.0], [0.75, -0.5, 1.0]], Color::BLUE);
+                renderer.draw_triangle([[-0.25, 0.5, 0.0], [-0.75, -0.5, 0.0], [0.25, -0.5, 0.0]], Color::RED);
+                renderer.draw_triangle([[0.0, 0.75, 0.5], [-0.5, -0.25, 0.5], [0.5, -0.25, 0.5]], Color::GREEN);
 
                 renderer.render().unwrap();
             });
