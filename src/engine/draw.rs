@@ -5,7 +5,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{WindowBuilder, Window},
 };
-use wgpu::util::DeviceExt;
+use wgpu::{util::DeviceExt, DepthStencilState};
 use wgpu_glyph::{ab_glyph, GlyphBrushBuilder, Section, Text};
 
 #[derive( Debug, PartialEq, Clone, Copy )]
@@ -333,12 +333,13 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
 
     render_pipeline: wgpu::RenderPipeline,
+    depth_view: wgpu::TextureView,
 
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
 
     staging_belt: wgpu::util::StagingBelt,
-    glyph_brush: wgpu_glyph::GlyphBrush<()>,
+    glyph_brush: wgpu_glyph::GlyphBrush<DepthStencilState>,
 }
 impl Renderer {
     pub fn draw_triangle<C: Into<Color>, P: Into<Point>>(&mut self, points: [P;3], color: C) {
@@ -574,7 +575,7 @@ impl Renderer {
         let color: Color = color.into();
         let color: [f32;4] = color.into();
         let position: Point = position.into();
-        
+
         let width = self.size.width as f32;
         let height = self.size.height as f32;
 
@@ -583,9 +584,27 @@ impl Renderer {
             text: vec![Text::new(text)
                 .with_color(color)
                 .with_scale(ab_glyph::PxScale {x: (scale / 2.) * width, y: (scale / 2.) * height})
-                .with_z(0.0)],
+                .with_z(position.z)],
             ..Section::default()
         });
+    }
+
+    fn create_depth_view(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> wgpu::TextureView {
+        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Depth view"),
+            size: wgpu::Extent3d {
+                width: config.width,
+                height: config.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Depth32Float,
+            view_formats: &[],
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        });
+        depth_texture.create_view(&wgpu::TextureViewDescriptor::default())
     }
 
     pub async fn new(window: &Window) -> Self {
@@ -661,7 +680,13 @@ impl Renderer {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::GreaterEqual,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -676,11 +701,20 @@ impl Renderer {
 
         let staging_belt = wgpu::util::StagingBelt::new(1024);
 
+        let depth_view = Renderer::create_depth_view(&device, &config);
+
         let inconsolata = ab_glyph::FontArc::try_from_slice(include_bytes!(
             "../Inconsolata-Regular.ttf"
         )).unwrap();
     
         let glyph_brush = GlyphBrushBuilder::using_font(inconsolata)
+            .depth_stencil_state(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Greater,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            })
             .build(&device, surface_format);
 
         Renderer {
@@ -691,6 +725,7 @@ impl Renderer {
             config,
 
             render_pipeline,
+            depth_view,
 
             vertices,
             indices,
@@ -706,45 +741,7 @@ impl Renderer {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-        }
-    }
-
-    fn zsort(&mut self) {
-        fn trig_z_cmp(indices: &Vec<u16>, vertices: &Vec<Vertex>, trig_index: usize) -> usize {
-            let z_from_index = |index: usize| -> f32 {
-                vertices[indices[index] as usize].position[2]
-            };
-
-            let mut cmp = 0;
-            let t = trig_index;
-            if z_from_index(t + 0) > z_from_index(t + 0 + 3) { cmp += 1 };
-            if z_from_index(t + 1) > z_from_index(t + 1 + 3) { cmp += 1 };
-            if z_from_index(t + 2) > z_from_index(t + 2 + 3) { cmp += 1 };
-            return cmp;
-        }
-
-        fn indices_sorted(indices: &Vec<u16>, vertices: &Vec<Vertex>) -> bool {
-            let mut i = 0;
-            while i < indices.len() - 3 {
-                if trig_z_cmp(&indices, &vertices, i) >= 2 {
-                    return false;
-                }
-                i += 3;
-            }
-
-            return true;
-        }
-
-        while !indices_sorted(&self.indices, &self.vertices) {
-            let mut t = 0;
-            while t < self.indices.len() - 3 {
-                if trig_z_cmp(&self.indices, &self.vertices, t) >= 2 {
-                    self.indices.swap(t + 0, t + 0 + 3);
-                    self.indices.swap(t + 1, t + 1 + 3);
-                    self.indices.swap(t + 2, t + 2 + 3);
-                }
-                t += 3;
-            }
+            self.depth_view = Renderer::create_depth_view(&self.device, &self.config)
         }
     }
 
@@ -754,8 +751,6 @@ impl Renderer {
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None, });
-
-        self.zsort();
 
         let vertex_buffer = self.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -783,7 +778,14 @@ impl Renderer {
                     store: true,
                 },
             })],
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &self.depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(0.0),
+                    store: true,
+                }),
+                stencil_ops: None,
+            }),
         });
 
         render_pass.set_pipeline(&self.render_pipeline);
@@ -798,6 +800,17 @@ impl Renderer {
             &mut self.staging_belt,
             &mut encoder,
             &view,
+            wgpu::RenderPassDepthStencilAttachment {
+                view: &self.depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(0.0),
+                    store: true,
+                }),
+                stencil_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(0),
+                    store: true,
+                }),
+            },
             self.size.width,
             self.size.height,
         ).unwrap();
@@ -979,6 +992,7 @@ mod tests {
             let mut renderer = Renderer::new(&window).await;
             event_loop.run(move |_, _, _| {
                 renderer.draw_triangle([[0.25, 0.5, 1.0], [-0.25, -0.5, 1.0], [0.75, -0.5, 1.0]], Color::BLUE);
+                renderer.draw_text([-0.25, 0.0, 0.75], "Hello World!", Color::WHITE, 0.1);
                 renderer.draw_triangle([[-0.25, 0.5, 0.0], [-0.75, -0.5, 0.0], [0.25, -0.5, 0.0]], Color::RED);
                 renderer.draw_triangle([[0.0, 0.75, 0.5], [-0.5, -0.25, 0.5], [0.5, -0.25, 0.5]], Color::GREEN);
 
