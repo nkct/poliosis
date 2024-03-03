@@ -10,12 +10,12 @@ All by the medium of minimalistic graphics and fun gameplay.
 It is still in very early stages of developement.
 
 ## Usage:
-* Make sure you have [Rust](https://www.rust-lang.org/tools/install)) installed
+* Make sure you have [Rust](https://www.rust-lang.org/tools/install) installed
 * [Clone the repository using git](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository), or download it manually 
 * Navigate to the project folder in your terminal of choice
 * Run `$ cargo run`
   
-Here is an example way to complete the above steps:
+Here is an example way to complete the above steps:  
 `$ cargo --version`  
 `$ git clone https://github.com/nkct/poliosis.git`  
 `$ cd ./poliosis`  
